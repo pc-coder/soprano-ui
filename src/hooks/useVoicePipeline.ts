@@ -35,30 +35,39 @@ export const useVoicePipeline = () => {
    * Start audio recording
    */
   const startRecording = useCallback(async () => {
+    console.log('[VoicePipeline] ===== START RECORDING CALLED =====');
     try {
+      console.log('[VoicePipeline] Requesting microphone permissions...');
       // Request permissions
       const permission = await Audio.requestPermissionsAsync();
+      console.log('[VoicePipeline] Permission result:', permission.granted);
+
       if (!permission.granted) {
         throw new Error('Microphone permission not granted');
       }
 
+      console.log('[VoicePipeline] Setting audio mode...');
       // Set audio mode
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
       });
 
+      console.log('[VoicePipeline] Creating recording instance...');
       // Create and start recording
       const recording = new Audio.Recording();
       await recording.prepareToRecordAsync(RECORDING_OPTIONS);
+      console.log('[VoicePipeline] Starting recording...');
       await recording.startAsync();
 
       recordingRef.current = recording;
       setStatus('listening');
       setIsRecording(true);
       setError(null);
+      console.log('[VoicePipeline] Recording started successfully, status set to listening');
     } catch (error: any) {
       console.error('[VoicePipeline] Start recording error:', error.message);
+      console.error('[VoicePipeline] Error stack:', error.stack);
       setError(`Failed to start recording: ${error.message}`);
       setStatus('error');
     }
@@ -244,9 +253,15 @@ export const useVoicePipeline = () => {
    * Synthesize and play response
    */
   const speakResponse = useCallback(async (text: string) => {
+    console.log('[VoicePipeline] speakResponse called with text:', text.substring(0, 50) + '...');
+    console.log('[VoicePipeline] Calling synthesizeSpeech...');
     const audioResponseUri = await synthesizeSpeech(text);
+    console.log('[VoicePipeline] Speech synthesized, URI:', audioResponseUri);
+    console.log('[VoicePipeline] Setting status to speaking...');
     setStatus('speaking');
+    console.log('[VoicePipeline] Playing audio...');
     await playAudio(audioResponseUri);
+    console.log('[VoicePipeline] Audio playback complete');
   }, [setStatus]);
 
   /**
@@ -292,38 +307,58 @@ export const useVoicePipeline = () => {
    * Start guided mode conversation - AI speaks first then listens
    */
   const startGuidedConversation = useCallback(async () => {
+    console.log('[VoicePipeline] ===== START GUIDED CONVERSATION =====');
+    console.log('[VoicePipeline] isGuidedMode:', guidedForm.isGuidedMode);
+    console.log('[VoicePipeline] currentFieldIndex:', guidedForm.currentFieldIndex);
+    console.log('[VoicePipeline] fieldDefinitions length:', guidedForm.fieldDefinitions.length);
+
     try {
+      console.log('[VoicePipeline] Waiting 100ms for state update...');
       // Small delay to ensure state has updated
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      console.log('[VoicePipeline] Getting current field...');
       const currentField = guidedForm.getCurrentField();
+      console.log('[VoicePipeline] Current field:', currentField ? `${currentField.name} - ${currentField.label}` : 'NULL');
+
       if (!currentField) {
-        console.warn('[VoicePipeline] No current field for guided mode');
+        console.warn('[VoicePipeline] No current field for guided mode - ABORTING');
         return;
       }
 
       const progress = guidedForm.getProgress();
+      console.log('[VoicePipeline] Progress:', progress);
 
       // Give a summary and introduction
       const summary = `I'll help you fill out this form. We have ${progress.total} fields to complete. Let's start.`;
+      console.log('[VoicePipeline] Summary message:', summary);
 
-      console.log('[VoicePipeline] Speaking summary and first field prompt');
-
+      console.log('[VoicePipeline] Calling speakResponse for summary...');
       // Speak the summary
       await speakResponse(summary);
+      console.log('[VoicePipeline] Summary spoken successfully');
 
       // Small pause between summary and question
+      console.log('[VoicePipeline] Waiting 300ms pause...');
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Ask for the first field
+      console.log('[VoicePipeline] Speaking first field prompt:', currentField.prompt);
       await speakResponse(currentField.prompt);
+      console.log('[VoicePipeline] First field prompt spoken successfully');
 
       // After speaking, automatically start listening
       console.log('[VoicePipeline] Auto-starting recording after prompt');
       await startRecording();
+      console.log('[VoicePipeline] Recording started successfully');
+
+      console.log('[VoicePipeline] ===== GUIDED CONVERSATION STARTED SUCCESSFULLY =====');
 
     } catch (error: any) {
-      console.error('[VoicePipeline] Error starting guided conversation:', error.message);
+      console.error('[VoicePipeline] ===== ERROR IN GUIDED CONVERSATION =====');
+      console.error('[VoicePipeline] Error name:', error.name);
+      console.error('[VoicePipeline] Error message:', error.message);
+      console.error('[VoicePipeline] Error stack:', error.stack);
       setError(error.message);
       setStatus('error');
     }

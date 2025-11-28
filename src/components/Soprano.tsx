@@ -61,6 +61,9 @@ export const Soprano: React.FC = () => {
   }, [status, rotateAnim]);
 
   const handleLongPress = async () => {
+    console.log('[Soprano] ===== LONG PRESS DETECTED =====');
+    console.log('[Soprano] Current screen:', currentScreen);
+
     // Check if current screen supports guided mode
     if (!hasGuidedFormSupport(currentScreen)) {
       console.log('[Soprano] Screen does not support guided mode:', currentScreen);
@@ -68,25 +71,43 @@ export const Soprano: React.FC = () => {
       return;
     }
 
+    console.log('[Soprano] Screen supports guided mode');
+
     // Check if already in guided mode
     if (guidedForm.isGuidedMode) {
       console.log('[Soprano] Already in guided mode');
       return;
     }
 
+    console.log('[Soprano] Not currently in guided mode, proceeding...');
+
     // Start guided mode
     const fieldDefinitions = getFormFieldsForScreen(currentScreen);
+    console.log('[Soprano] Field definitions retrieved:', fieldDefinitions.length);
+
     if (fieldDefinitions.length === 0) {
       console.log('[Soprano] No field definitions found for screen:', currentScreen);
       return;
     }
 
     console.log('[Soprano] Starting guided mode with', fieldDefinitions.length, 'fields');
+    console.log('[Soprano] Form refs available:', Object.keys(formRefs).length);
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     guidedForm.startGuidedMode(fieldDefinitions, formRefs);
 
-    // AI speaks first, then starts listening
-    await startGuidedConversation();
+    console.log('[Soprano] Guided mode started, now calling startGuidedConversation...');
+
+    try {
+      // AI speaks first, then starts listening
+      await startGuidedConversation();
+      console.log('[Soprano] startGuidedConversation completed successfully');
+    } catch (error: any) {
+      console.error('[Soprano] Error in startGuidedConversation:', error.message);
+      console.error('[Soprano] Error stack:', error.stack);
+    }
+
+    console.log('[Soprano] ===== LONG PRESS HANDLER COMPLETE =====');
   };
 
   const getButtonColor = () => {
