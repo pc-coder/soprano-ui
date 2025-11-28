@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
+import { TextInput } from 'react-native';
 
 interface ScreenContextType {
   currentScreen: string;
   screenData: Record<string, any>;
   formState: Record<string, any>;
+  formRefs: Record<string, React.RefObject<TextInput>>;
+  formHandlers: Record<string, any>;
   updateScreenData: (data: Record<string, any>) => void;
   updateFormState: (data: Record<string, any>) => void;
   setCurrentScreen: (screen: string) => void;
+  registerFormRefs: (refs: Record<string, React.RefObject<TextInput>>) => void;
+  registerFormHandlers: (handlers: Record<string, any>) => void;
+  clearFormData: () => void;
 }
 
 const ScreenContext = createContext<ScreenContextType | undefined>(undefined);
@@ -28,6 +34,8 @@ export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ ch
   const currentScreenRef = useRef<string>('Dashboard');
   const [screenData, setScreenData] = useState<Record<string, any>>({});
   const [formState, setFormState] = useState<Record<string, any>>({});
+  const [formRefs, setFormRefs] = useState<Record<string, React.RefObject<TextInput>>>({});
+  const [formHandlers, setFormHandlers] = useState<Record<string, any>>({});
 
   const setCurrentScreen = (screen: string) => {
     const timestamp = new Date().toISOString();
@@ -76,13 +84,35 @@ export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ ch
     setFormState(newFormState);
   };
 
+  const registerFormRefs = (refs: Record<string, React.RefObject<TextInput>>) => {
+    console.log('[ScreenContext] Registering form refs:', Object.keys(refs).join(', '));
+    setFormRefs(refs);
+  };
+
+  const registerFormHandlers = (handlers: Record<string, any>) => {
+    console.log('[ScreenContext] Registering form handlers:', Object.keys(handlers).join(', '));
+    setFormHandlers(handlers);
+  };
+
+  const clearFormData = () => {
+    console.log('[ScreenContext] Clearing form data');
+    setFormState({});
+    setFormRefs({});
+    setFormHandlers({});
+  };
+
   const value: ScreenContextType = {
     currentScreen,
     screenData,
     formState,
+    formRefs,
+    formHandlers,
     updateScreenData,
     updateFormState,
     setCurrentScreen,
+    registerFormRefs,
+    registerFormHandlers,
+    clearFormData,
   };
 
   return <ScreenContext.Provider value={value}>{children}</ScreenContext.Provider>;

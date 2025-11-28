@@ -17,6 +17,7 @@ import { InputField } from '../components/InputField';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Soprano } from '../components/Soprano';
+import { GuidedModeIndicator } from '../components/GuidedModeIndicator';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -36,7 +37,7 @@ interface Props {
 
 const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
   const { user, balance } = useApp();
-  const { setCurrentScreen, updateFormState } = useScreenContext();
+  const { setCurrentScreen, updateFormState, updateScreenData, registerFormRefs, registerFormHandlers } = useScreenContext();
 
   // SOPRANO: All inputs must expose refs for AI integration
   const upiIdRef = useRef<TextInput>(null);
@@ -64,6 +65,31 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
       focusedField,
     });
   }, [upiId, amount, note, errors, focusedField]);
+
+  useEffect(() => {
+    // Update screen data with balance for validation
+    updateScreenData({
+      balance,
+    });
+  }, [balance]);
+
+  useEffect(() => {
+    // Register form refs for guided mode
+    registerFormRefs({
+      upiIdRef,
+      amountRef,
+      noteRef,
+    });
+
+    // Register form handlers for guided mode
+    registerFormHandlers({
+      setUpiId,
+      setAmount,
+      setNote,
+      handleUpiIdBlur,
+      handleAmountBlur,
+    });
+  }, []);
 
   const handleUpiIdBlur = () => {
     // SOPRANO: Guardian mode - explain error and suggest fix
@@ -134,6 +160,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <GuidedModeIndicator />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer}

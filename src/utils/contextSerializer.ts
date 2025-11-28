@@ -1,9 +1,18 @@
 import { formatCurrency } from './formatters';
+import { FormFieldDefinition, ConversationEntry } from '../context/GuidedFormContext';
 
 interface ScreenContextData {
   currentScreen: string;
   screenData: Record<string, any>;
   formState: Record<string, any>;
+}
+
+interface GuidedModeContext {
+  isGuidedMode: boolean;
+  currentField?: FormFieldDefinition;
+  completedFields: string[];
+  conversationHistory: ConversationEntry[];
+  progress: { current: number; total: number };
 }
 
 /**
@@ -168,17 +177,89 @@ function serializeGenericContext(
 }
 
 /**
+ * Serializes guided mode context
+ */
+function serializeGuidedModeContext(guided: GuidedModeContext): string => {
+  if (!guided.isGuidedMode || !guided.currentField) {
+    return '';
+  }
+
+  let desc = '\n🎯 GUIDED FORM MODE ACTIVE\n\n';
+  desc += `Current Task: Fill the "${guided.currentField.label}" field\n`;
+  desc += `Progress: Step ${guided.progress.current} of ${guided.progress.total}\n`;
+  desc += `Field Prompt: ${guided.currentField.prompt}\n`;
+  desc += `Field Type: ${guided.currentField.type || 'text'}\n`;
+  desc += `Required: ${guided.currentField.required ? 'Yes' : 'No (can be skipped)'}\n`;
+
+  if (guided.completedFields.length > 0) {
+    desc += `\nCompleted Fields: ${guided.completedFields.join(', ')}\n`;
+  }
+
+  if (guided.conversationHistory.length > 0) {
+    desc += '\nRecent conversation:\n';
+    guided.conversationHistory.slice(-3).forEach((entry) => {
+      desc += `  - ${entry.field}: User said "${entry.userInput}" → Parsed as: ${entry.parsedValue}\n`;
+    });
+  }
+
+  return desc;
+}
+
+/**
  * Creates a system prompt for the LLM with screen context
  */
-export const createSystemPrompt = (context: ScreenContextData): string => {
+export const createSystemPrompt = (
+  context: ScreenContextData,
+  guidedContext?: GuidedModeContext
+): string => {
   const contextDescription = serializeContextForLLM(context);
+  const guidedDescription = guidedContext ? serializeGuidedModeContext(guidedContext) : '';
 
-  return `You are Soprano, a friendly and helpful AI banking assistant integrated into a mobile banking app.
+  // Base prompt for free conversation mode
+  let basePrompt = `You are Soprano, a friendly and helpful AI banking assistant integrated into a mobile banking app.
 
 Your role is to help users with their banking tasks, answer questions, and provide guidance based on what they're currently viewing.
 
 CURRENT CONTEXT:
-${contextDescription}
+${contextDescription}`;
+
+  // If in guided mode, add guided-specific instructions
+  if (guidedContext?.isGuidedMode && guidedContext.currentField) {
+    basePrompt += `\n${guidedDescription}
+
+GUIDED MODE INSTRUCTIONS:
+You are helping the user fill out a form field-by-field using voice.
+
+YOUR TASK:
+1. Ask the user for the "${guidedContext.currentField.label}" using this prompt: "${guidedContext.currentField.prompt}"
+2. Listen to their response
+3. Extract the value they want to enter for this field
+4. Respond with a confirmation in a natural, friendly way
+
+RESPONSE FORMAT:
+You must respond with valid JSON in the following format:
+{
+  "action": "fill_field",
+  "field": "${guidedContext.currentField.name}",
+  "value": "<extracted_value>",
+  "message": "<friendly confirmation message to speak to user>"
+}
+
+SPECIAL CASES:
+- If user says "skip" or "no" for optional fields: {"action": "skip", "message": "Okay, skipping this field"}
+- If user says "go back" or "change previous": {"action": "go_back", "message": "Going back to the previous field"}
+- If user says "cancel" or "stop": {"action": "cancel", "message": "Canceling form filling"}
+- If response is unclear: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
+
+VALUE EXTRACTION RULES:
+- For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi"
+- For amounts: Convert "five hundred" → "500", "two thousand five hundred" → "2500", "fifteen thousand rupees" → "15000"
+- For text: Extract as-is
+
+Remember: Only return the JSON, no additional text.`;
+  } else {
+    // Free conversation mode instructions
+    basePrompt += `
 
 GUIDELINES:
 - Be concise and conversational - this is a voice interface
@@ -193,4 +274,7 @@ Example good responses:
 - "I see you're on the dashboard. Your current balance is ₹45,230. Would you like to review recent transactions or make a payment?"
 - "You're filling out a UPI payment form. I notice the amount field is empty - what amount would you like to send?"
 - "Looks like there's an error with the UPI ID format. It should look like username@bankname, for example: ramesh@oksbi"`;
+  }
+
+  return basePrompt;
 };

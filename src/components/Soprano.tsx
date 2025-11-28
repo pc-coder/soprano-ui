@@ -7,13 +7,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { useVoice } from '../context/VoiceContext';
 import { useVoicePipeline } from '../hooks/useVoicePipeline';
+import { useGuidedForm } from '../context/GuidedFormContext';
+import { useScreenContext } from '../context/ScreenContext';
+import { getFormFieldsForScreen, hasGuidedFormSupport } from '../config/formFieldDefinitions';
 
 export const Soprano: React.FC = () => {
   const { status } = useVoice();
   const { handleMicPress } = useVoicePipeline();
+  const guidedForm = useGuidedForm();
+  const { currentScreen, formRefs } = useScreenContext();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -54,7 +60,41 @@ export const Soprano: React.FC = () => {
     }
   }, [status, rotateAnim]);
 
+  const handleLongPress = () => {
+    // Check if current screen supports guided mode
+    if (!hasGuidedFormSupport(currentScreen)) {
+      console.log('[Soprano] Screen does not support guided mode:', currentScreen);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      return;
+    }
+
+    // Check if already in guided mode
+    if (guidedForm.isGuidedMode) {
+      console.log('[Soprano] Already in guided mode');
+      return;
+    }
+
+    // Start guided mode
+    const fieldDefinitions = getFormFieldsForScreen(currentScreen);
+    if (fieldDefinitions.length === 0) {
+      console.log('[Soprano] No field definitions found for screen:', currentScreen);
+      return;
+    }
+
+    console.log('[Soprano] Starting guided mode with', fieldDefinitions.length, 'fields');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    guidedForm.startGuidedMode(fieldDefinitions, formRefs);
+
+    // Start recording immediately
+    handleMicPress();
+  };
+
   const getButtonColor = () => {
+    // Show different color when in guided mode
+    if (guidedForm.isGuidedMode) {
+      return colors.success; // Green for guided mode
+    }
+
     switch (status) {
       case 'listening':
         return colors.error; // Red when recording
@@ -103,6 +143,8 @@ export const Soprano: React.FC = () => {
       <TouchableOpacity
         style={[styles.button, { backgroundColor: getButtonColor() }]}
         onPress={handleMicPress}
+        onLongPress={handleLongPress}
+        delayLongPress={500}
         disabled={isDisabled}
         activeOpacity={0.8}
       >

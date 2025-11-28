@@ -4,6 +4,15 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { EncodingType } from 'expo-file-system/legacy';
 import { API_CONFIG } from '../config/api';
 import { createSystemPrompt } from '../utils/contextSerializer';
+import { FormFieldDefinition, ConversationEntry } from '../context/GuidedFormContext';
+
+export interface GuidedContextData {
+  isGuidedMode: boolean;
+  currentField?: FormFieldDefinition;
+  completedFields: string[];
+  conversationHistory: ConversationEntry[];
+  progress: { current: number; total: number };
+}
 
 /**
  * Transcribe audio using Deepgram STT
@@ -72,7 +81,8 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
  */
 export const getLLMResponse = async (
   transcript: string,
-  contextData: { currentScreen: string; screenData: Record<string, any>; formState: Record<string, any> }
+  contextData: { currentScreen: string; screenData: Record<string, any>; formState: Record<string, any> },
+  guidedContext?: GuidedContextData
 ): Promise<string> => {
   const startTime = performance.now();
 
@@ -81,7 +91,7 @@ export const getLLMResponse = async (
       apiKey: API_CONFIG.anthropic.apiKey,
     });
 
-    const systemPrompt = createSystemPrompt(contextData);
+    const systemPrompt = createSystemPrompt(contextData, guidedContext);
 
     const message = await anthropic.messages.create({
       model: API_CONFIG.anthropic.model,

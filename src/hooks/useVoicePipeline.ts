@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import { Audio } from 'expo-av';
 import { useVoice } from '../context/VoiceContext';
 import { useScreenContext } from '../context/ScreenContext';
+import { useGuidedForm } from '../context/GuidedFormContext';
+import { useFormController } from './useFormController';
 import { RECORDING_OPTIONS } from '../config/api';
 import {
   transcribeAudio,
@@ -9,7 +11,9 @@ import {
   synthesizeSpeech,
   playAudio,
   cleanupAudioFiles,
+  GuidedContextData,
 } from '../services/voiceService';
+import { processFieldResponse, validateFieldValue, generateErrorPrompt } from '../utils/conversationFlow';
 
 export const useVoicePipeline = () => {
   const {
@@ -22,7 +26,9 @@ export const useVoicePipeline = () => {
     reset,
   } = useVoice();
 
-  const { currentScreen, screenData, formState } = useScreenContext();
+  const { currentScreen, screenData, formState, formRefs, formHandlers } = useScreenContext();
+  const guidedForm = useGuidedForm();
+  const { fillField } = useFormController();
   const recordingRef = useRef<Audio.Recording | null>(null);
 
   /**
@@ -84,21 +90,35 @@ export const useVoicePipeline = () => {
       const transcript = await transcribeAudio(audioUri);
       setTranscript(transcript);
 
-      // Step 2: Get LLM response from Anthropic with screen context
+      // Prepare context data
       const contextData = {
         currentScreen,
         screenData,
         formState,
       };
-      const llmResponse = await getLLMResponse(transcript, contextData);
+
+      // Check if we're in guided mode
+      const guidedContextData: GuidedContextData | undefined = guidedForm.isGuidedMode
+        ? {
+            isGuidedMode: true,
+            currentField: guidedForm.getCurrentField() || undefined,
+            completedFields: guidedForm.completedFields,
+            conversationHistory: guidedForm.conversationHistory,
+            progress: guidedForm.getProgress(),
+          }
+        : undefined;
+
+      // Step 2: Get LLM response from Anthropic with screen context and guided context
+      const llmResponse = await getLLMResponse(transcript, contextData, guidedContextData);
       setResponse(llmResponse);
 
-      // Step 3: Synthesize speech with ElevenLabs
-      const audioResponseUri = await synthesizeSpeech(llmResponse);
-
-      // Step 4: Play audio response
-      setStatus('speaking');
-      await playAudio(audioResponseUri);
+      // Step 3: Handle guided mode vs free conversation mode
+      if (guidedForm.isGuidedMode && guidedContextData?.currentField) {
+        await handleGuidedModeResponse(llmResponse, transcript);
+      } else {
+        // Free conversation mode: just speak the response
+        await speakResponse(llmResponse);
+      }
 
       // Done
       setStatus('idle');
@@ -112,7 +132,96 @@ export const useVoicePipeline = () => {
       setStatus('error');
       setIsRecording(false);
     }
-  }, [currentScreen, screenData, formState, setStatus, setIsRecording, setTranscript, setResponse, setError]);
+  }, [currentScreen, screenData, formState, guidedForm, setStatus, setIsRecording, setTranscript, setResponse, setError]);
+
+  /**
+   * Handle response in guided mode
+   */
+  const handleGuidedModeResponse = useCallback(async (llmResponse: string, userTranscript: string) => {
+    const currentField = guidedForm.getCurrentField();
+    if (!currentField) return;
+
+    // Parse the LLM response to extract action and value
+    const parsed = processFieldResponse(llmResponse, currentField);
+
+    console.log('[VoicePipeline] Guided mode action:', parsed.action, 'Value:', parsed.value);
+
+    // Handle different actions
+    switch (parsed.action) {
+      case 'fill_field': {
+        // Validate the value
+        const validation = validateFieldValue(parsed.value, currentField, formState);
+
+        if (!validation.valid && validation.error) {
+          // Validation failed - ask again with error message
+          const errorPrompt = generateErrorPrompt(currentField, validation.error);
+          await speakResponse(errorPrompt);
+          return;
+        }
+
+        // Fill the form field programmatically
+        const fieldRef = formRefs[currentField.refName];
+        const fieldHandler = formHandlers[`set${currentField.name.charAt(0).toUpperCase()}${currentField.name.slice(1)}`];
+
+        if (fieldRef && fieldHandler) {
+          const fieldOnBlur = formHandlers[`handle${currentField.name.charAt(0).toUpperCase()}${currentField.name.slice(1)}Blur`];
+          fillField(fieldRef, String(parsed.value), fieldHandler, fieldOnBlur);
+        }
+
+        // Update guided form state
+        guidedForm.updateFieldValue(currentField.name, userTranscript, parsed.value);
+
+        // Speak confirmation
+        await speakResponse(parsed.message);
+
+        // Move to next field
+        if (!guidedForm.isLastField()) {
+          guidedForm.moveToNextField();
+        } else {
+          // All fields completed
+          guidedForm.stopGuidedMode();
+        }
+        break;
+      }
+
+      case 'skip': {
+        if (!currentField.required) {
+          guidedForm.skipCurrentField();
+          await speakResponse(parsed.message);
+        } else {
+          await speakResponse("I'm sorry, but this field is required. " + currentField.prompt);
+        }
+        break;
+      }
+
+      case 'go_back': {
+        guidedForm.moveToPreviousField();
+        await speakResponse(parsed.message);
+        break;
+      }
+
+      case 'cancel': {
+        guidedForm.stopGuidedMode();
+        await speakResponse(parsed.message);
+        break;
+      }
+
+      case 'clarify': {
+        // Ask again
+        await speakResponse(parsed.message);
+        break;
+      }
+    }
+  }, [guidedForm, formState, formRefs, formHandlers, fillField]);
+
+  /**
+   * Synthesize and play response
+   */
+  const speakResponse = useCallback(async (text: string) => {
+    const audioResponseUri = await synthesizeSpeech(text);
+    setStatus('speaking');
+    await playAudio(audioResponseUri);
+  }, [setStatus]);
 
   /**
    * Cancel recording without processing
