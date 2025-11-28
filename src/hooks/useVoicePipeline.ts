@@ -389,52 +389,52 @@ export const useVoicePipeline = () => {
 
       // Get the filled values from guided form
       const filledValues = guidedForm.getFilledValues();
-      console.log('[VoicePipeline] Filled values:', filledValues);
-
-      // Update the form state with filled values before submitting
-      // This ensures handleContinue has the correct values
-      if (currentScreen === 'UPIPayment') {
-        const setters = {
-          upiId: formHandlers.setUpiId,
-          amount: formHandlers.setAmount,
-          note: formHandlers.setNote,
-        };
-
-        // Set all values in state synchronously
-        Object.entries(filledValues).forEach(([fieldName, value]) => {
-          const setter = setters[fieldName as keyof typeof setters];
-          if (setter && typeof setter === 'function') {
-            console.log(`[VoicePipeline] Setting ${fieldName} to:`, value);
-            setter(String(value));
-          }
-        });
-
-        // Trigger blur handlers to validate and clear any errors
-        const blurHandlers = {
-          upiId: formHandlers.handleUpiIdBlur,
-          amount: formHandlers.handleAmountBlur,
-        };
-
-        Object.entries(filledValues).forEach(([fieldName, value]) => {
-          const blurHandler = blurHandlers[fieldName as keyof typeof blurHandlers];
-          if (blurHandler && typeof blurHandler === 'function') {
-            console.log(`[VoicePipeline] Calling blur handler for ${fieldName}`);
-            blurHandler();
-          }
-        });
-
-        // Delay to let all state updates and validation complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      // Submit the form by calling handleContinue
-      const handleContinue = formHandlers.handleContinue;
-      if (handleContinue && typeof handleContinue === 'function') {
-        handleContinue();
-      }
+      console.log('[VoicePipeline] Filled values from conversation history:', filledValues);
 
       // Stop guided mode
       guidedForm.stopGuidedMode();
+
+      // Navigate directly using the values we collected
+      // This bypasses the state synchronization issue
+      if (currentScreen === 'UPIPayment' && formHandlers.navigation) {
+        const upiIdValue = String(filledValues.upiId || '');
+        const amountValue = parseFloat(String(filledValues.amount || '0'));
+        const noteValue = String(filledValues.note || '');
+        const balanceValue = formHandlers.balance || 50000;
+
+        console.log('[VoicePipeline] Validating values before navigation:');
+        console.log('  upiId:', upiIdValue);
+        console.log('  amount:', amountValue);
+        console.log('  note:', noteValue);
+
+        // Validate before navigating
+        const { validateUPIId, validateAmount } = require('../utils/validation');
+        const { findPayeeByUPI, isNewPayee } = require('../data/mockPayees');
+
+        const upiValidation = validateUPIId(upiIdValue);
+        const amountValidation = validateAmount(amountValue, balanceValue);
+
+        if (upiValidation.valid && amountValidation.valid) {
+          const payee = findPayeeByUPI(upiIdValue);
+          const recipientName = payee?.name || upiIdValue.split('@')[0];
+          const isNewRecipient = isNewPayee(upiIdValue);
+
+          console.log('[VoicePipeline] Validation passed, navigating to UPIConfirm');
+          formHandlers.navigation.navigate('UPIConfirm', {
+            upiId: upiIdValue,
+            amount: amountValue,
+            note: noteValue || undefined,
+            recipientName,
+            isNewRecipient,
+          });
+        } else {
+          console.error('[VoicePipeline] Validation failed:', {
+            upiError: upiValidation.error,
+            amountError: amountValidation.error,
+          });
+          await speakResponse("Sorry, there was an error validating the payment details. Please try again.");
+        }
+      }
     } else if (isRejected) {
       console.log('[VoicePipeline] User rejected - offering to edit');
       guidedForm.setAwaitingConfirmation(false);
