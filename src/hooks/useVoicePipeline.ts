@@ -113,8 +113,29 @@ export const useVoicePipeline = () => {
       setStatus('processing');
 
       // Step 1: Transcribe audio with Deepgram
-      const transcript = await transcribeAudio(audioUri);
-      setTranscript(transcript);
+      let transcript: string;
+      try {
+        transcript = await transcribeAudio(audioUri);
+        setTranscript(transcript);
+      } catch (transcriptionError: any) {
+        console.error('[VoicePipeline] Transcription failed:', transcriptionError.message);
+
+        // If in guided mode, ask user to repeat
+        if (guidedForm.isGuidedMode) {
+          const currentField = guidedForm.getCurrentField();
+          if (currentField) {
+            console.log('[VoicePipeline] Guided mode - asking user to repeat');
+            await speakResponse("I didn't catch that. Could you please repeat?");
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await startRecording();
+            setStatus('idle');
+            return;
+          }
+        }
+
+        // Otherwise, throw the error
+        throw transcriptionError;
+      }
 
       // Prepare context data
       const contextData = {
@@ -154,6 +175,27 @@ export const useVoicePipeline = () => {
 
     } catch (error: any) {
       console.error('[VoicePipeline] Processing error:', error.message);
+
+      // If in guided mode, try to recover gracefully
+      if (guidedForm.isGuidedMode) {
+        const currentField = guidedForm.getCurrentField();
+        if (currentField) {
+          console.log('[VoicePipeline] Guided mode - recovering from error');
+          try {
+            await speakResponse("Sorry, I had trouble processing that. Let's try again. " + currentField.prompt);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await startRecording();
+            setStatus('idle');
+            setIsRecording(false);
+            return;
+          } catch (recoveryError) {
+            console.error('[VoicePipeline] Recovery also failed:', recoveryError);
+            // Fall through to error state
+          }
+        }
+      }
+
+      // If not in guided mode or recovery failed, go to error state
       setError(error.message);
       setStatus('error');
       setIsRecording(false);
@@ -169,8 +211,6 @@ export const useVoicePipeline = () => {
 
     // Parse the LLM response to extract action and value
     const parsed = processFieldResponse(llmResponse, currentField);
-
-    console.log('[VoicePipeline] Guided mode action:', parsed.action, 'Value:', parsed.value);
 
     // Handle different actions
     switch (parsed.action) {
@@ -202,15 +242,15 @@ export const useVoicePipeline = () => {
 
         // Move to next field
         if (!guidedForm.isLastField()) {
-          guidedForm.moveToNextField();
+          // Get next field directly from moveToNextField() to avoid race condition
+          const nextField = guidedForm.moveToNextField();
 
-          // Small delay then ask for next field
-          await new Promise(resolve => setTimeout(resolve, 100));
-          const nextField = guidedForm.getCurrentField();
           if (nextField) {
+            // Small delay before speaking
+            await new Promise(resolve => setTimeout(resolve, 100));
             await speakResponse(nextField.prompt);
+
             // Extra delay to ensure audio playback is complete and recording is ready
-            console.log('[VoicePipeline] Waiting 200ms before starting next recording...');
             await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
           }
@@ -223,12 +263,13 @@ export const useVoicePipeline = () => {
 
       case 'skip': {
         if (!currentField.required) {
-          guidedForm.skipCurrentField();
+          // skipCurrentField calls moveToNextField internally, need to update that too
+          const nextField = guidedForm.moveToNextField();
+          guidedForm.updateFieldValue(currentField.name, '(skipped)', null);
           await speakResponse(parsed.message);
 
           // Small delay then ask for next field after skipping
           await new Promise(resolve => setTimeout(resolve, 100));
-          const nextField = guidedForm.getCurrentField();
           if (nextField) {
             await speakResponse(nextField.prompt);
             // Extra delay before starting recording
@@ -244,12 +285,12 @@ export const useVoicePipeline = () => {
       }
 
       case 'go_back': {
-        guidedForm.moveToPreviousField();
+        // Get previous field directly from moveToPreviousField()
+        const prevField = guidedForm.moveToPreviousField();
         await speakResponse(parsed.message);
 
         // Small delay then ask for the previous field
         await new Promise(resolve => setTimeout(resolve, 100));
-        const prevField = guidedForm.getCurrentField();
         if (prevField) {
           await speakResponse(prevField.prompt);
           // Extra delay before starting recording
@@ -279,15 +320,9 @@ export const useVoicePipeline = () => {
    * Synthesize and play response
    */
   const speakResponse = useCallback(async (text: string) => {
-    console.log('[VoicePipeline] speakResponse called with text:', text.substring(0, 50) + '...');
-    console.log('[VoicePipeline] Calling synthesizeSpeech...');
     const audioResponseUri = await synthesizeSpeech(text);
-    console.log('[VoicePipeline] Speech synthesized, URI:', audioResponseUri);
-    console.log('[VoicePipeline] Setting status to speaking...');
     setStatus('speaking');
-    console.log('[VoicePipeline] Playing audio...');
     await playAudio(audioResponseUri);
-    console.log('[VoicePipeline] Audio playback complete');
   }, [setStatus]);
 
   /**

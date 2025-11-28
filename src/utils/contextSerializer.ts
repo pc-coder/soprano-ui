@@ -230,11 +230,14 @@ ${contextDescription}`;
 GUIDED MODE INSTRUCTIONS:
 You are helping the user fill out a form field-by-field using voice.
 
+IMPORTANT: The user has ALREADY been asked: "${guidedContext.currentField.prompt}"
+The user has just spoken their response. Your job is to extract the value from what they said.
+
 YOUR TASK:
-1. Ask the user for the "${guidedContext.currentField.label}" using this prompt: "${guidedContext.currentField.prompt}"
-2. Listen to their response
-3. Extract the value they want to enter for this field
-4. Respond with a confirmation in a natural, friendly way
+1. The user was asked for the "${guidedContext.currentField.label}" field
+2. The user's spoken response is in the transcript below
+3. Extract the value they said for this SPECIFIC field ONLY
+4. Respond with a confirmation message
 
 RESPONSE FORMAT:
 You must respond with valid JSON in the following format:
@@ -256,7 +259,11 @@ VALUE EXTRACTION RULES:
 - For amounts: Convert "five hundred" → "500", "two thousand five hundred" → "2500", "fifteen thousand rupees" → "15000"
 - For text: Extract as-is
 
-Remember: Only return the JSON, no additional text.`;
+CRITICAL RULES:
+1. DO NOT ask any questions - only extract and confirm
+2. DO NOT mention other fields - only the current field: "${guidedContext.currentField.label}"
+3. The message should be a confirmation like "Got it, I've set the ${guidedContext.currentField.label} to [value]"
+4. Only return the JSON, no additional text before or after`;
   } else {
     // Free conversation mode instructions
     basePrompt += `

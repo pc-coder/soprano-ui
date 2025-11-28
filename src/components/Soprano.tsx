@@ -61,54 +61,35 @@ export const Soprano: React.FC = () => {
   }, [status, rotateAnim]);
 
   const handleLongPress = async () => {
-    console.log('[Soprano] ===== LONG PRESS DETECTED =====');
-    console.log('[Soprano] Current screen:', currentScreen);
+    console.log('[Soprano] Long press detected - starting guided mode');
 
     // Check if current screen supports guided mode
     if (!hasGuidedFormSupport(currentScreen)) {
-      console.log('[Soprano] Screen does not support guided mode:', currentScreen);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
-    console.log('[Soprano] Screen supports guided mode');
-
     // Check if already in guided mode
     if (guidedForm.isGuidedMode) {
-      console.log('[Soprano] Already in guided mode');
       return;
     }
-
-    console.log('[Soprano] Not currently in guided mode, proceeding...');
 
     // Start guided mode
     const fieldDefinitions = getFormFieldsForScreen(currentScreen);
-    console.log('[Soprano] Field definitions retrieved:', fieldDefinitions.length);
 
     if (fieldDefinitions.length === 0) {
-      console.log('[Soprano] No field definitions found for screen:', currentScreen);
       return;
     }
-
-    console.log('[Soprano] Starting guided mode with', fieldDefinitions.length, 'fields');
-    console.log('[Soprano] Form refs available:', Object.keys(formRefs).length);
-    console.log('[Soprano] First field:', fieldDefinitions[0].name, '-', fieldDefinitions[0].label);
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     guidedForm.startGuidedMode(fieldDefinitions, formRefs);
 
-    console.log('[Soprano] Guided mode started, now calling startGuidedConversation...');
-
     try {
       // AI speaks first, then starts listening - pass field data directly to avoid state race condition
       await startGuidedConversation(fieldDefinitions[0], fieldDefinitions.length);
-      console.log('[Soprano] startGuidedConversation completed successfully');
     } catch (error: any) {
-      console.error('[Soprano] Error in startGuidedConversation:', error.message);
-      console.error('[Soprano] Error stack:', error.stack);
+      console.error('[Soprano] Error in guided conversation:', error.message);
     }
-
-    console.log('[Soprano] ===== LONG PRESS HANDLER COMPLETE =====');
   };
 
   const getButtonColor = () => {
@@ -148,6 +129,11 @@ export const Soprano: React.FC = () => {
 
   const isDisabled = status === 'processing' || status === 'speaking';
 
+  const handlePress = async () => {
+    if (isDisabled) return;
+    await handleMicPress();
+  };
+
   const rotation = rotateAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -164,10 +150,10 @@ export const Soprano: React.FC = () => {
     >
       <TouchableOpacity
         style={[styles.button, { backgroundColor: getButtonColor() }]}
-        onPress={handleMicPress}
+        onPress={handlePress}
         onLongPress={handleLongPress}
-        delayLongPress={500}
-        disabled={isDisabled}
+        delayLongPress={400}
+        disabled={false}
         activeOpacity={0.8}
       >
         {status === 'processing' ? (

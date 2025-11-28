@@ -30,8 +30,8 @@ interface GuidedFormState {
 interface GuidedFormContextType extends GuidedFormState {
   startGuidedMode: (fields: FormFieldDefinition[], refs: Record<string, React.RefObject<TextInput>>) => void;
   stopGuidedMode: () => void;
-  moveToNextField: () => void;
-  moveToPreviousField: () => void;
+  moveToNextField: () => FormFieldDefinition | null;
+  moveToPreviousField: () => FormFieldDefinition | null;
   updateFieldValue: (fieldName: string, userInput: string, parsedValue: any) => void;
   skipCurrentField: () => void;
   getCurrentField: () => FormFieldDefinition | null;
@@ -90,28 +90,34 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
     setConversationHistory([]);
   };
 
-  const moveToNextField = () => {
+  const moveToNextField = (): FormFieldDefinition | null => {
     if (currentFieldIndex < fieldDefinitions.length - 1) {
       const nextIndex = currentFieldIndex + 1;
-      console.log('[GuidedForm] Moving to field', nextIndex, ':', fieldDefinitions[nextIndex]?.name);
+      const nextField = fieldDefinitions[nextIndex];
+      console.log('[GuidedForm] Moving to field', nextIndex, ':', nextField?.name);
       setCurrentFieldIndex(nextIndex);
+      return nextField || null;
     } else {
       console.log('[GuidedForm] All fields completed');
       stopGuidedMode();
+      return null;
     }
   };
 
-  const moveToPreviousField = () => {
+  const moveToPreviousField = (): FormFieldDefinition | null => {
     if (currentFieldIndex > 0) {
       const prevIndex = currentFieldIndex - 1;
-      console.log('[GuidedForm] Moving back to field', prevIndex, ':', fieldDefinitions[prevIndex]?.name);
+      const prevField = fieldDefinitions[prevIndex];
+      console.log('[GuidedForm] Moving back to field', prevIndex, ':', prevField?.name);
       setCurrentFieldIndex(prevIndex);
       // Remove the previous field from completed list
-      const prevFieldName = fieldDefinitions[prevIndex]?.name;
+      const prevFieldName = prevField?.name;
       if (prevFieldName) {
         setCompletedFields((prev) => prev.filter((f) => f !== prevFieldName));
       }
+      return prevField || null;
     }
+    return null;
   };
 
   const updateFieldValue = (fieldName: string, userInput: string, parsedValue: any) => {
