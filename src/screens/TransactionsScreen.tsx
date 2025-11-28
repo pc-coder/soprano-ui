@@ -24,6 +24,7 @@ import { Transaction } from '../types';
 import { Ionicons } from '@expo/vector-icons';
 import { generateSpotlightCommentary } from '../services/commentaryService';
 import { synthesizeSpeech, playAudio } from '../services/voiceService';
+import { generateSpendingSong, lyricToSong } from '../services/songService';
 
 type TransactionsScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -43,6 +44,8 @@ const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
   const [commentedTransactions, setCommentedTransactions] = useState<Set<string>>(new Set());
   const isSpeakingRef = useRef(false);
   const commentaryEnabledRef = useRef(commentaryEnabled);
+  const [isGeneratingSong, setIsGeneratingSong] = useState(false);
+  const [isPlayingSong, setIsPlayingSong] = useState(false);
 
   useEffect(() => {
     setCurrentScreen('Transactions');
@@ -87,6 +90,38 @@ const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
       setIsSpeaking(false);
     } else {
       console.log('[Commentary] Commentary mode active, scroll to trigger');
+    }
+  };
+
+  const handleGenerateSong = async () => {
+    try {
+      console.log('[Song] Generating spending song...');
+      console.log('[Song] Total transactions:', transactions.length);
+      console.log('[Song] Transaction sample:', transactions.slice(0, 3).map(t => ({ name: t.name, amount: t.amount })));
+      setIsGeneratingSong(true);
+
+      // Generate lyrics - pass ALL transactions
+      const lyrics = await generateSpendingSong(transactions);
+      console.log('[Song] Lyrics generated');
+
+      // Convert to song
+      console.log('[Song] Creating audio...');
+      const audioUri = await lyricToSong(lyrics);
+      console.log('[Song] Audio created:', audioUri);
+
+      setIsGeneratingSong(false);
+      setIsPlayingSong(true);
+
+      // Play the song
+      console.log('[Song] Playing...');
+      await playAudio(audioUri);
+      console.log('[Song] Finished playing');
+
+      setIsPlayingSong(false);
+    } catch (error: any) {
+      console.error('[Song] Error:', error.message);
+      setIsGeneratingSong(false);
+      setIsPlayingSong(false);
     }
   };
 
@@ -240,7 +275,39 @@ const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
             color={commentaryEnabled ? colors.warning : colors.textMuted}
           />
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleGenerateSong}
+          style={[
+            styles.musicButton,
+            (isGeneratingSong || isPlayingSong) && styles.musicButtonActive,
+          ]}
+          disabled={isGeneratingSong || isPlayingSong}
+        >
+          <Ionicons
+            name={isPlayingSong ? 'musical-notes' : 'musical-note'}
+            size={20}
+            color={isGeneratingSong || isPlayingSong ? colors.success : colors.textMuted}
+          />
+        </TouchableOpacity>
       </View>
+
+      {isGeneratingSong && (
+        <View style={styles.songGeneratingBanner}>
+          <Ionicons name="musical-notes" size={16} color={colors.primary} />
+          <Text style={styles.songGeneratingText}>
+            Generating your spending song...
+          </Text>
+        </View>
+      )}
+
+      {isPlayingSong && (
+        <View style={styles.songPlayingBanner}>
+          <Ionicons name="musical-notes" size={16} color={colors.success} />
+          <Text style={styles.songPlayingText}>
+            🎵 Playing your spending song 🎵
+          </Text>
+        </View>
+      )}
 
       <TransactionCommentary
         isActive={commentaryEnabled}
@@ -298,6 +365,50 @@ const styles = StyleSheet.create({
   commentaryToggleActive: {
     backgroundColor: 'rgba(255, 193, 7, 0.1)',
     borderRadius: 8,
+  },
+  musicButton: {
+    padding: spacing.sm,
+    marginLeft: spacing.sm,
+  },
+  musicButtonActive: {
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+    borderRadius: 8,
+  },
+  songGeneratingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(33, 150, 243, 0.1)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  songGeneratingText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    marginLeft: spacing.sm,
+    fontWeight: '600',
+  },
+  songPlayingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(76, 175, 80, 0.15)',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.success,
+  },
+  songPlayingText: {
+    ...typography.bodySmall,
+    color: colors.success,
+    marginLeft: spacing.sm,
+    fontWeight: '600',
   },
   listContent: {
     paddingBottom: 120,
