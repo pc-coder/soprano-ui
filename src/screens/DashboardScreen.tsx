@@ -17,6 +17,7 @@ import { BalanceCard } from '../components/BalanceCard';
 import { QuickActions } from '../components/QuickActions';
 import { TransactionList } from '../components/TransactionList';
 import { Soprano } from '../components/Soprano';
+import { MoreMenu } from '../components/MoreMenu';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -34,6 +35,8 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { setCurrentScreen, updateScreenData } = useScreenContext();
   const { registerElement, clearRegistry } = useVisualGuide();
   const [refreshing, setRefreshing] = useState(false);
+  const [moreMenuVisible, setMoreMenuVisible] = useState(false);
+  const [moreMenuPosition, setMoreMenuPosition] = useState({ x: 0, y: 0 });
 
   // Create refs for all interactive elements
   const payButtonRef = useRef<View>(null);
@@ -90,6 +93,22 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
+  const handleMorePress = () => {
+    moreButtonRef.current?.measure((x, y, width, height, pageX, pageY) => {
+      setMoreMenuPosition({ x: pageX, y: pageY + height });
+      setMoreMenuVisible(true);
+    });
+  };
+
+  const handleProfilePress = () => {
+    navigation.navigate('Profile');
+  };
+
+  const handleHelpPress = () => {
+    // TODO: Navigate to Help screen when implemented
+    console.log('Help pressed');
+  };
+
   const quickActions = [
     {
       id: 'pay-button',
@@ -113,7 +132,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       id: 'more-button',
       icon: 'dots-horizontal' as const,
       label: 'More',
-      onPress: () => navigation.navigate('Profile'),
+      onPress: handleMorePress,
     },
   ];
 
@@ -163,6 +182,14 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       </ScrollView>
 
       <Soprano />
+
+      <MoreMenu
+        visible={moreMenuVisible}
+        onClose={() => setMoreMenuVisible(false)}
+        onProfile={handleProfilePress}
+        onHelp={handleHelpPress}
+        anchorPosition={moreMenuPosition}
+      />
     </SafeAreaView>
   );
 };
