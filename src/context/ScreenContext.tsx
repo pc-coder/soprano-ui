@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
 
 interface ScreenContextType {
   currentScreen: string;
@@ -25,31 +25,55 @@ interface ScreenContextProviderProps {
 
 export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ children }) => {
   const [currentScreen, setCurrentScreenState] = useState<string>('Dashboard');
+  const currentScreenRef = useRef<string>('Dashboard');
   const [screenData, setScreenData] = useState<Record<string, any>>({});
   const [formState, setFormState] = useState<Record<string, any>>({});
 
   const setCurrentScreen = (screen: string) => {
     const timestamp = new Date().toISOString();
-    console.log(`[ScreenContext] ${timestamp} - Screen Changed: ${currentScreen} → ${screen}`);
+    console.log(`[ScreenContext] ${timestamp} - Screen Changed: ${currentScreenRef.current} → ${screen}`);
+    currentScreenRef.current = screen;
     setCurrentScreenState(screen);
   };
 
   const updateScreenData = (data: Record<string, any>) => {
     const timestamp = new Date().toISOString();
-    console.log(`[ScreenContext] ${timestamp} - Screen Data Updated:`, {
-      screen: currentScreen,
-      data,
+    const newData = { ...screenData, ...data };
+
+    console.log(`[ScreenContext] ${timestamp} - Screen Data Updated`);
+    console.log(`  Screen: ${currentScreenRef.current}`);
+    console.log(`  Data Fields:`);
+    Object.keys(newData).forEach(key => {
+      const value = newData[key];
+      const displayValue = value === null ? 'null'
+        : value === undefined ? 'undefined'
+        : value === '' ? '(empty string)'
+        : typeof value === 'object' ? JSON.stringify(value)
+        : String(value);
+      console.log(`    ${key}: ${displayValue}`);
     });
-    setScreenData(prev => ({ ...prev, ...data }));
+
+    setScreenData(newData);
   };
 
   const updateFormState = (data: Record<string, any>) => {
     const timestamp = new Date().toISOString();
-    console.log(`[ScreenContext] ${timestamp} - Form State Updated:`, {
-      screen: currentScreen,
-      formState: data,
+    const newFormState = { ...formState, ...data };
+
+    console.log(`[ScreenContext] ${timestamp} - Form State Updated`);
+    console.log(`  Screen: ${currentScreenRef.current}`);
+    console.log(`  Form Fields:`);
+    Object.keys(newFormState).forEach(key => {
+      const value = newFormState[key];
+      const displayValue = value === null ? 'null'
+        : value === undefined ? 'undefined'
+        : value === '' ? '(empty string)'
+        : typeof value === 'object' ? JSON.stringify(value)
+        : String(value);
+      console.log(`    ${key}: ${displayValue}`);
     });
-    setFormState(prev => ({ ...prev, ...data }));
+
+    setFormState(newFormState);
   };
 
   const value: ScreenContextType = {

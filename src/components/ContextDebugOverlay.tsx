@@ -19,7 +19,12 @@ export const ContextDebugOverlay: React.FC = () => {
   }
 
   const formatJSON = (obj: any): string => {
-    return JSON.stringify(obj, null, 2);
+    return JSON.stringify(obj, (key, value) => {
+      if (value === null) return 'null';
+      if (value === undefined) return 'undefined';
+      if (value === '') return '(empty)';
+      return value;
+    }, 2);
   };
 
   const hasData = Object.keys(screenData).length > 0;
