@@ -17,12 +17,9 @@ import { BalanceCard } from '../components/BalanceCard';
 import { QuickActions } from '../components/QuickActions';
 import { TransactionList } from '../components/TransactionList';
 import { Soprano } from '../components/Soprano';
-import { Card } from '../components/Card';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
-import { getMonthlySpending, getMonthlyIncome } from '../data/mockTransactions';
-import { formatCurrency } from '../utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import { getElementsForScreen } from '../config/elementRegistry';
 
@@ -86,10 +83,6 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     if (hour < 18) return 'Good afternoon';
     return 'Good evening';
   };
-
-  const monthlySpending = getMonthlySpending(transactions);
-  const monthlyIncome = getMonthlyIncome(transactions);
-  const spendingPercentage = monthlyIncome > 0 ? (monthlySpending / monthlyIncome) * 100 : 0;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -157,35 +150,6 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
         <QuickActions actions={quickActions} elementRefs={elementRefs} />
 
-        <Card style={styles.spendingCard}>
-          <View style={styles.spendingHeader}>
-            <Text style={styles.spendingTitle}>This Month</Text>
-            <Text style={styles.spendingPercentage}>
-              {spendingPercentage.toFixed(0)}%
-            </Text>
-          </View>
-          <View style={styles.spendingRow}>
-            <Text style={styles.spendingLabel}>Income</Text>
-            <Text style={[styles.spendingAmount, { color: colors.success }]}>
-              {formatCurrency(monthlyIncome)}
-            </Text>
-          </View>
-          <View style={styles.spendingRow}>
-            <Text style={styles.spendingLabel}>Spending</Text>
-            <Text style={[styles.spendingAmount, { color: colors.error }]}>
-              {formatCurrency(-monthlySpending)}
-            </Text>
-          </View>
-          <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBar,
-                { width: `${Math.min(spendingPercentage, 100)}%` },
-              ]}
-            />
-          </View>
-        </Card>
-
         <View ref={transactionsListRef} collapsable={false}>
           <TransactionList
             transactions={recentTransactions}
@@ -231,51 +195,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingTop: spacing.lg,
-  },
-  spendingCard: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  spendingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  spendingTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-  },
-  spendingPercentage: {
-    ...typography.h3,
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  spendingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  spendingLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  spendingAmount: {
-    ...typography.body,
-    fontWeight: '600',
-  },
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: colors.border,
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginTop: spacing.sm,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 4,
   },
 });
 
