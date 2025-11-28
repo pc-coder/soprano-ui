@@ -161,12 +161,19 @@ export const useVoicePipeline = () => {
         .filter(e => e.screenName === currentScreen)
         .map(e => ({ id: e.id, description: e.description }));
 
+      console.log('[VoicePipeline] Element registry for', currentScreen, ':', elementRegistry.length, 'elements');
+      console.log('[VoicePipeline] Elements:', elementRegistry.map(e => e.id).join(', '));
+
       // Step 2: Get LLM response from Anthropic with screen context and guided context
       const llmResponse = await getLLMResponse(transcript, contextData, guidedContextData, elementRegistry);
       setResponse(llmResponse);
 
+      console.log('[VoicePipeline] LLM Response:', llmResponse.substring(0, 200));
+
       // Step 3: Check if response is a navigation guide
       const navigationGuide = parseNavigationGuide(llmResponse);
+
+      console.log('[VoicePipeline] Navigation guide parsed:', navigationGuide);
 
       if (navigationGuide) {
         // Handle visual navigation guide
