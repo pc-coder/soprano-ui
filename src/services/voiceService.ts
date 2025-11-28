@@ -27,24 +27,17 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       throw new Error('Audio file does not exist');
     }
 
-    // Read audio file as base64
-    const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-      encoding: EncodingType.Base64,
-    });
-
-    // Convert base64 to Blob for FormData
-    const binaryString = atob(audioBase64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: 'audio/m4a' });
-
     // Create FormData with audio file
+    // In React Native, FormData can accept file URIs directly
     const formData = new FormData();
-    formData.append('file', blob, 'audio.m4a');
+    formData.append('file', {
+      uri: audioUri,
+      type: 'audio/m4a',
+      name: 'audio.m4a',
+    } as any);
     formData.append('model', API_CONFIG.openai.whisperModel);
-    formData.append('language', 'en'); // Can be removed for auto-detection, or set to specific language
+    // Remove language parameter for automatic language detection
+    // formData.append('language', 'en');
 
     // Call OpenAI Whisper API
     const response = await fetch(
