@@ -178,7 +178,8 @@ export const useVoicePipeline = () => {
         if (!guidedForm.isLastField()) {
           guidedForm.moveToNextField();
 
-          // Ask for the next field and start listening
+          // Small delay then ask for next field
+          await new Promise(resolve => setTimeout(resolve, 100));
           const nextField = guidedForm.getCurrentField();
           if (nextField) {
             await speakResponse(nextField.prompt);
@@ -196,7 +197,8 @@ export const useVoicePipeline = () => {
           guidedForm.skipCurrentField();
           await speakResponse(parsed.message);
 
-          // Ask for next field after skipping
+          // Small delay then ask for next field after skipping
+          await new Promise(resolve => setTimeout(resolve, 100));
           const nextField = guidedForm.getCurrentField();
           if (nextField) {
             await speakResponse(nextField.prompt);
@@ -213,7 +215,8 @@ export const useVoicePipeline = () => {
         guidedForm.moveToPreviousField();
         await speakResponse(parsed.message);
 
-        // Ask for the previous field
+        // Small delay then ask for the previous field
+        await new Promise(resolve => setTimeout(resolve, 100));
         const prevField = guidedForm.getCurrentField();
         if (prevField) {
           await speakResponse(prevField.prompt);
@@ -288,15 +291,17 @@ export const useVoicePipeline = () => {
   /**
    * Start guided mode conversation - AI speaks first then listens
    */
-  const startGuidedConversation = useCallback(async () => {
+  const startGuidedConversation = useCallback(async (isFirstField: boolean = true) => {
     try {
+      // Small delay to ensure state has updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const currentField = guidedForm.getCurrentField();
       if (!currentField) {
         console.warn('[VoicePipeline] No current field for guided mode');
         return;
       }
 
-      const isFirstField = guidedForm.currentFieldIndex === 0;
       const prompt = isFirstField
         ? `I'll help you fill this form. ${currentField.prompt}`
         : currentField.prompt;
