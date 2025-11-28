@@ -179,7 +179,7 @@ function serializeGenericContext(
 /**
  * Serializes guided mode context
  */
-function serializeGuidedModeContext(guided: GuidedModeContext): string => {
+function serializeGuidedModeContext(guided: GuidedModeContext): string {
   if (!guided.isGuidedMode || !guided.currentField) {
     return '';
   }
