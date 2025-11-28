@@ -50,13 +50,13 @@ export const VisualGuideProvider: React.FC<VisualGuideProviderProps> = ({ childr
   const [isGuiding, setIsGuiding] = useState(false);
   const [instruction, setInstruction] = useState('');
   const [elementPosition, setElementPosition] = useState<ElementPosition | null>(null);
-  const elementRegistryRef = useRef<RegisteredElement[]>([]);
+  const [elementRegistry, setElementRegistry] = useState<RegisteredElement[]>([]);
 
   const showGuide = async (elementId: string, instructionText: string): Promise<void> => {
     console.log('[VisualGuide] Showing guide for element:', elementId);
 
     // Find the element in registry
-    const element = elementRegistryRef.current.find(e => e.id === elementId);
+    const element = elementRegistry.find(e => e.id === elementId);
 
     if (!element) {
       console.warn('[VisualGuide] Element not found in registry:', elementId);
@@ -92,28 +92,29 @@ export const VisualGuideProvider: React.FC<VisualGuideProviderProps> = ({ childr
   const registerElement = (element: RegisteredElement) => {
     console.log('[VisualGuide] Registering element:', element.id, 'for screen:', element.screenName);
 
-    // Remove existing element with same ID
-    elementRegistryRef.current = elementRegistryRef.current.filter(e => e.id !== element.id);
-
-    // Add new element
-    elementRegistryRef.current.push(element);
+    setElementRegistry(prev => {
+      // Remove existing element with same ID
+      const filtered = prev.filter(e => e.id !== element.id);
+      // Add new element
+      return [...filtered, element];
+    });
   };
 
   const unregisterElement = (elementId: string) => {
     console.log('[VisualGuide] Unregistering element:', elementId);
-    elementRegistryRef.current = elementRegistryRef.current.filter(e => e.id !== elementId);
+    setElementRegistry(prev => prev.filter(e => e.id !== elementId));
   };
 
   const clearRegistry = () => {
     console.log('[VisualGuide] Clearing element registry');
-    elementRegistryRef.current = [];
+    setElementRegistry([]);
   };
 
   const findElementByKeywords = (query: string, currentScreen: string): RegisteredElement | null => {
     const lowerQuery = query.toLowerCase();
 
     // Filter elements for current screen
-    const screenElements = elementRegistryRef.current.filter(e => e.screenName === currentScreen);
+    const screenElements = elementRegistry.filter(e => e.screenName === currentScreen);
 
     console.log('[VisualGuide] Searching for keywords in query:', lowerQuery);
     console.log('[VisualGuide] Available elements on', currentScreen, ':', screenElements.length);
@@ -137,7 +138,7 @@ export const VisualGuideProvider: React.FC<VisualGuideProviderProps> = ({ childr
     isGuiding,
     instruction,
     elementPosition,
-    elementRegistry: elementRegistryRef.current,
+    elementRegistry,
     showGuide,
     hideGuide,
     registerElement,
