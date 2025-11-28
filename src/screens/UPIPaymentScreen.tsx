@@ -172,7 +172,10 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
       <GuidedModeIndicator />
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[
+          styles.contentContainer,
+          guidedForm.isGuidedMode && styles.contentContainerWithGuided,
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.section}>
@@ -274,6 +277,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: spacing.md,
+  },
+  contentContainerWithGuided: {
+    paddingTop: 80, // Height of GuidedModeIndicator
   },
   section: {
     marginBottom: spacing.lg,
