@@ -30,9 +30,9 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       bytes[i] = binaryString.charCodeAt(i);
     }
 
-    // Call Deepgram API
+    // Call Deepgram API with language detection
     const deepgramResponse = await fetch(
-      `${API_CONFIG.deepgram.baseUrl}/listen?model=nova-2&smart_format=true`,
+      `${API_CONFIG.deepgram.baseUrl}/listen?model=nova-2&smart_format=true&detect_language=true`,
       {
         method: 'POST',
         headers: {
@@ -50,13 +50,15 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
 
     const data = await deepgramResponse.json();
     const transcript = data.results?.channels[0]?.alternatives[0]?.transcript;
+    const detectedLanguage = data.results?.channels[0]?.detected_language;
 
     if (!transcript) {
       throw new Error('No transcript returned from Deepgram');
     }
 
     const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-    console.log(`[VoiceService] STT completed in ${duration}s: "${transcript}"`);
+    const langInfo = detectedLanguage ? ` [${detectedLanguage}]` : '';
+    console.log(`[VoiceService] STT completed in ${duration}s${langInfo}: "${transcript}"`);
 
     return transcript;
   } catch (error: any) {
