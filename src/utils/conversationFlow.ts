@@ -74,6 +74,26 @@ export const validateFieldValue = (
 };
 
 /**
+ * Generate task-specific greeting based on screen/form type
+ */
+export const generateTaskGreeting = (screenName: string, totalFields: number): string => {
+  let taskDescription = '';
+
+  switch (screenName) {
+    case 'UPIPayment':
+      taskDescription = 'make a UPI payment';
+      break;
+    case 'LoanApplication':
+      taskDescription = 'apply for a loan';
+      break;
+    default:
+      taskDescription = 'complete this task';
+  }
+
+  return `I'll help you ${taskDescription}. We have ${totalFields} fields to complete. Let's start.`;
+};
+
+/**
  * Generate initial prompt for a field
  */
 export const generateFieldPrompt = (field: FormFieldDefinition, isFirstField: boolean): string => {

@@ -14,7 +14,7 @@ import {
   cleanupAudioFiles,
   GuidedContextData,
 } from '../services/voiceService';
-import { processFieldResponse, validateFieldValue, generateErrorPrompt } from '../utils/conversationFlow';
+import { processFieldResponse, validateFieldValue, generateErrorPrompt, generateTaskGreeting } from '../utils/conversationFlow';
 
 export const useVoicePipeline = () => {
   const {
@@ -615,6 +615,7 @@ export const useVoicePipeline = () => {
     console.log('[VoicePipeline] ===== START GUIDED CONVERSATION =====');
     console.log('[VoicePipeline] First field passed:', firstField ? `${firstField.name} - ${firstField.label}` : 'NULL');
     console.log('[VoicePipeline] Total fields:', totalFields);
+    console.log('[VoicePipeline] Current screen:', currentScreen);
 
     try {
       if (!firstField) {
@@ -622,8 +623,8 @@ export const useVoicePipeline = () => {
         return;
       }
 
-      // Give a summary and introduction
-      const summary = `I'll help you fill out this form. We have ${totalFields} fields to complete. Let's start.`;
+      // Generate task-specific greeting
+      const summary = generateTaskGreeting(currentScreen, totalFields);
       console.log('[VoicePipeline] Summary message:', summary);
 
       console.log('[VoicePipeline] Calling speakResponse for summary...');
@@ -657,7 +658,7 @@ export const useVoicePipeline = () => {
       setError(error.message);
       setStatus('error');
     }
-  }, [speakResponse, startRecording, setError, setStatus]);
+  }, [currentScreen, speakResponse, startRecording, setError, setStatus]);
 
   return {
     handleMicPress,
