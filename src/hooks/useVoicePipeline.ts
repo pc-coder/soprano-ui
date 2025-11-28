@@ -173,7 +173,7 @@ export const useVoicePipeline = () => {
           if (currentField) {
             console.log('[VoicePipeline] Guided mode - asking user to repeat');
             await speakResponse("I didn't catch that. Could you please repeat?");
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
             await startRecording();
             return;
           }
@@ -256,7 +256,7 @@ export const useVoicePipeline = () => {
           console.log('[VoicePipeline] Guided mode - recovering from error');
           try {
             await speakResponse("Sorry, I had trouble processing that. Let's try again. " + currentField.prompt);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
             await startRecording();
             return;
           } catch (recoveryError) {
@@ -318,12 +318,12 @@ export const useVoicePipeline = () => {
 
           if (nextField) {
             // Small delay before speaking
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200));
             await speakResponse(nextField.prompt);
 
             // Extra delay to ensure audio session is fully released and ready for recording
             console.log('[VoicePipeline] Waiting for audio session to be ready...');
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
             console.log('[VoicePipeline] Starting recording for next field');
             await startRecording();
           }
@@ -343,16 +343,16 @@ export const useVoicePipeline = () => {
           await speakResponse(parsed.message);
 
           // Small delay then ask for next field after skipping
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 200));
           if (nextField) {
             await speakResponse(nextField.prompt);
             // Extra delay to ensure audio session is ready for recording
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 700));
             await startRecording();
           }
         } else {
           await speakResponse("I'm sorry, but this field is required. " + currentField.prompt);
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 700));
           await startRecording();
         }
         break;
@@ -364,11 +364,11 @@ export const useVoicePipeline = () => {
         await speakResponse(parsed.message);
 
         // Small delay then ask for the previous field
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
         if (prevField) {
           await speakResponse(prevField.prompt);
           // Extra delay to ensure audio session is ready for recording
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 700));
           await startRecording();
         }
         break;
@@ -383,7 +383,7 @@ export const useVoicePipeline = () => {
       case 'clarify': {
         // Ask again with clarification message
         await speakResponse(parsed.message);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 700));
         await startRecording();
         break;
       }
@@ -455,9 +455,9 @@ export const useVoicePipeline = () => {
           if (!guidedForm.isLastField()) {
             const nextField = guidedForm.moveToNextField();
             if (nextField) {
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise(resolve => setTimeout(resolve, 200));
               await speakResponse(nextField.prompt);
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise(resolve => setTimeout(resolve, 700));
               await startRecording();
             }
           } else {
@@ -476,7 +476,7 @@ export const useVoicePipeline = () => {
             await speakResponse("I had trouble scanning the document. Let's try entering it with voice instead. " + currentField.prompt);
           }
 
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 700));
           await startRecording();
         }
         break;
@@ -642,12 +642,12 @@ export const useVoicePipeline = () => {
       await speakResponse("No problem. Which field would you like to change? You can say UPI ID, amount, or note.");
 
       // Listen for which field to edit
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     } else {
       // Unclear response - ask again
       await speakResponse("I didn't catch that. Would you like to proceed with this payment? Please say yes or no.");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     }
   }, [guidedForm, formHandlers, speakResponse, startRecording, currentScreen]);
@@ -684,17 +684,17 @@ export const useVoicePipeline = () => {
       if (field) {
         guidedForm.setSelectingFieldToEdit(false);
         await speakResponse(`Okay, let's update the ${field.label}. ${field.prompt}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 700));
         await startRecording();
       } else {
         await speakResponse("Sorry, I couldn't find that field. Please say UPI ID, amount, or note.");
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 700));
         await startRecording();
       }
     } else {
       // Unclear response
       await speakResponse("I didn't catch which field you want to edit. Please say UPI ID, amount, or note.");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     }
   }, [guidedForm, speakResponse, startRecording]);
@@ -706,6 +706,9 @@ export const useVoicePipeline = () => {
     const audioResponseUri = await synthesizeSpeech(text);
     setStatus('speaking');
     await playAudio(audioResponseUri);
+    // Reset status to idle after speaking completes
+    setStatus('idle');
+    console.log('[VoicePipeline] Speech completed, status reset to idle');
   }, [setStatus]);
 
   /**
@@ -783,8 +786,8 @@ export const useVoicePipeline = () => {
       console.log('[VoicePipeline] First field prompt spoken successfully');
 
       // After speaking, automatically start listening
-      console.log('[VoicePipeline] Waiting 500ms before starting recording...');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('[VoicePipeline] Waiting 700ms before starting recording...');
+      await new Promise(resolve => setTimeout(resolve, 700));
       console.log('[VoicePipeline] Auto-starting recording after prompt');
       await startRecording();
       console.log('[VoicePipeline] Recording started successfully');
