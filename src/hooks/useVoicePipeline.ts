@@ -30,8 +30,6 @@ export const useVoicePipeline = () => {
    */
   const startRecording = useCallback(async () => {
     try {
-      console.log('[VoicePipeline] Starting recording...');
-
       // Request permissions
       const permission = await Audio.requestPermissionsAsync();
       if (!permission.granted) {
@@ -53,10 +51,8 @@ export const useVoicePipeline = () => {
       setStatus('listening');
       setIsRecording(true);
       setError(null);
-
-      console.log('[VoicePipeline] Recording started');
     } catch (error: any) {
-      console.error('[VoicePipeline] Start recording error:', error);
+      console.error('[VoicePipeline] Start recording error:', error.message);
       setError(`Failed to start recording: ${error.message}`);
       setStatus('error');
     }
@@ -71,8 +67,6 @@ export const useVoicePipeline = () => {
         throw new Error('No active recording');
       }
 
-      console.log('[VoicePipeline] Stopping recording...');
-
       // Stop recording
       await recordingRef.current.stopAndUnloadAsync();
       const audioUri = recordingRef.current.getURI();
@@ -84,7 +78,6 @@ export const useVoicePipeline = () => {
         throw new Error('No audio recorded');
       }
 
-      console.log('[VoicePipeline] Recording stopped, starting processing...');
       setStatus('processing');
 
       // Step 1: Transcribe audio with Deepgram
@@ -108,14 +101,13 @@ export const useVoicePipeline = () => {
       await playAudio(audioResponseUri);
 
       // Done
-      console.log('[VoicePipeline] Pipeline complete');
       setStatus('idle');
 
       // Cleanup old audio files
       cleanupAudioFiles().catch(console.error);
 
     } catch (error: any) {
-      console.error('[VoicePipeline] Processing error:', error);
+      console.error('[VoicePipeline] Processing error:', error.message);
       setError(error.message);
       setStatus('error');
       setIsRecording(false);
@@ -132,9 +124,8 @@ export const useVoicePipeline = () => {
         recordingRef.current = null;
       }
       reset();
-      console.log('[VoicePipeline] Recording cancelled');
-    } catch (error) {
-      console.error('[VoicePipeline] Cancel error:', error);
+    } catch (error: any) {
+      console.error('[VoicePipeline] Cancel error:', error.message);
     }
   }, [reset]);
 
@@ -144,23 +135,19 @@ export const useVoicePipeline = () => {
   const handleMicPress = useCallback(async () => {
     switch (status) {
       case 'idle':
-        // Start recording
         await startRecording();
         break;
 
       case 'listening':
-        // Stop recording and process
         await stopRecordingAndProcess();
         break;
 
       case 'processing':
       case 'speaking':
         // Cannot interrupt during processing or speaking
-        console.log('[VoicePipeline] Cannot interrupt during', status);
         break;
 
       case 'error':
-        // Reset and allow retry
         reset();
         break;
     }
