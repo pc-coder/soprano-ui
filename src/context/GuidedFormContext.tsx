@@ -25,6 +25,8 @@ interface GuidedFormState {
   fieldDefinitions: FormFieldDefinition[];
   conversationHistory: ConversationEntry[];
   formRefs: Record<string, React.RefObject<TextInput>>;
+  isAwaitingConfirmation: boolean;
+  isSelectingFieldToEdit: boolean;
 }
 
 interface GuidedFormContextType extends GuidedFormState {
@@ -37,6 +39,10 @@ interface GuidedFormContextType extends GuidedFormState {
   getCurrentField: () => FormFieldDefinition | null;
   isLastField: () => boolean;
   getProgress: () => { current: number; total: number; percentage: number };
+  setAwaitingConfirmation: (awaiting: boolean) => void;
+  setSelectingFieldToEdit: (selecting: boolean) => void;
+  getFilledValues: () => Record<string, any>;
+  jumpToField: (fieldName: string) => FormFieldDefinition | null;
   reset: () => void;
 }
 
@@ -61,6 +67,8 @@ const initialState: GuidedFormState = {
   fieldDefinitions: [],
   conversationHistory: [],
   formRefs: {},
+  isAwaitingConfirmation: false,
+  isSelectingFieldToEdit: false,
 };
 
 export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children }) => {
@@ -70,6 +78,8 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
   const [fieldDefinitions, setFieldDefinitions] = useState<FormFieldDefinition[]>(initialState.fieldDefinitions);
   const [conversationHistory, setConversationHistory] = useState<ConversationEntry[]>(initialState.conversationHistory);
   const [formRefs, setFormRefs] = useState<Record<string, React.RefObject<TextInput>>>(initialState.formRefs);
+  const [isAwaitingConfirmation, setIsAwaitingConfirmation] = useState(initialState.isAwaitingConfirmation);
+  const [isSelectingFieldToEdit, setIsSelectingFieldToEdit] = useState(initialState.isSelectingFieldToEdit);
 
   const startGuidedMode = (fields: FormFieldDefinition[], refs: Record<string, React.RefObject<TextInput>>) => {
     console.log('[GuidedForm] Starting guided mode with', fields.length, 'fields');
@@ -88,6 +98,39 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
     setCurrentFieldIndex(0);
     setCompletedFields([]);
     setConversationHistory([]);
+    setIsAwaitingConfirmation(false);
+    setIsSelectingFieldToEdit(false);
+  };
+
+  const setAwaitingConfirmation = (awaiting: boolean) => {
+    console.log('[GuidedForm] Setting awaiting confirmation:', awaiting);
+    setIsAwaitingConfirmation(awaiting);
+  };
+
+  const setSelectingFieldToEdit = (selecting: boolean) => {
+    console.log('[GuidedForm] Setting selecting field to edit:', selecting);
+    setIsSelectingFieldToEdit(selecting);
+  };
+
+  const getFilledValues = (): Record<string, any> => {
+    const values: Record<string, any> = {};
+    conversationHistory.forEach((entry) => {
+      if (entry.parsedValue !== null && entry.userInput !== '(skipped)') {
+        values[entry.field] = entry.parsedValue;
+      }
+    });
+    return values;
+  };
+
+  const jumpToField = (fieldName: string): FormFieldDefinition | null => {
+    const fieldIndex = fieldDefinitions.findIndex((f) => f.name === fieldName);
+    if (fieldIndex >= 0) {
+      console.log('[GuidedForm] Jumping to field:', fieldName, 'at index', fieldIndex);
+      setCurrentFieldIndex(fieldIndex);
+      return fieldDefinitions[fieldIndex];
+    }
+    console.warn('[GuidedForm] Field not found:', fieldName);
+    return null;
   };
 
   const moveToNextField = (): FormFieldDefinition | null => {
@@ -175,6 +218,8 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
     setFieldDefinitions(initialState.fieldDefinitions);
     setConversationHistory(initialState.conversationHistory);
     setFormRefs(initialState.formRefs);
+    setIsAwaitingConfirmation(initialState.isAwaitingConfirmation);
+    setIsSelectingFieldToEdit(initialState.isSelectingFieldToEdit);
   };
 
   const value: GuidedFormContextType = {
@@ -184,6 +229,8 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
     fieldDefinitions,
     conversationHistory,
     formRefs,
+    isAwaitingConfirmation,
+    isSelectingFieldToEdit,
     startGuidedMode,
     stopGuidedMode,
     moveToNextField,
@@ -193,6 +240,10 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
     getCurrentField,
     isLastField,
     getProgress,
+    setAwaitingConfirmation,
+    setSelectingFieldToEdit,
+    getFilledValues,
+    jumpToField,
     reset,
   };
 

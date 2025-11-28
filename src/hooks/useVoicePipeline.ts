@@ -160,8 +160,17 @@ export const useVoicePipeline = () => {
       setResponse(llmResponse);
 
       // Step 3: Handle guided mode vs free conversation mode
-      if (guidedForm.isGuidedMode && guidedContextData?.currentField) {
-        await handleGuidedModeResponse(llmResponse, transcript);
+      if (guidedForm.isGuidedMode) {
+        if (guidedForm.isAwaitingConfirmation) {
+          // Handle confirmation response
+          await handleConfirmationResponse(llmResponse, transcript);
+        } else if (guidedForm.isSelectingFieldToEdit) {
+          // Handle field selection for editing
+          await handleFieldSelection(transcript);
+        } else if (guidedContextData?.currentField) {
+          // Handle field filling
+          await handleGuidedModeResponse(llmResponse, transcript);
+        }
       } else {
         // Free conversation mode: just speak the response
         await speakResponse(llmResponse);
@@ -255,8 +264,9 @@ export const useVoicePipeline = () => {
             await startRecording();
           }
         } else {
-          // All fields completed
-          guidedForm.stopGuidedMode();
+          // All fields completed - move to confirmation phase
+          console.log('[VoicePipeline] All fields completed, requesting confirmation');
+          await requestConfirmation();
         }
         break;
       }
@@ -315,6 +325,144 @@ export const useVoicePipeline = () => {
       }
     }
   }, [guidedForm, formState, formRefs, formHandlers, fillField, speakResponse, startRecording]);
+
+  /**
+   * Request confirmation after all fields are filled
+   */
+  const requestConfirmation = useCallback(async () => {
+    console.log('[VoicePipeline] Generating summary for confirmation');
+
+    // Generate summary from filled values
+    const filledValues = guidedForm.getFilledValues();
+    let summary = "Great! Let me confirm the details. ";
+
+    // Format summary based on screen
+    if (currentScreen === 'UPIPayment') {
+      const upiId = filledValues.upiId || '';
+      const amount = filledValues.amount || '';
+      const note = filledValues.note;
+
+      summary += `You're sending ${amount} rupees to ${upiId}`;
+      if (note) {
+        summary += ` with the note: ${note}`;
+      }
+      summary += ". Would you like to proceed with this payment?";
+    }
+
+    // Set awaiting confirmation state
+    guidedForm.setAwaitingConfirmation(true);
+
+    // Speak summary and ask for confirmation
+    await speakResponse(summary);
+
+    // Start listening for confirmation
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await startRecording();
+  }, [guidedForm, currentScreen, speakResponse, startRecording]);
+
+  /**
+   * Handle user's confirmation response
+   */
+  const handleConfirmationResponse = useCallback(async (llmResponse: string, userTranscript: string) => {
+    console.log('[VoicePipeline] Handling confirmation response');
+    console.log('[VoicePipeline] User said:', userTranscript);
+
+    // Parse response - check for confirmation or rejection
+    const lowerTranscript = userTranscript.toLowerCase();
+    const isConfirmed =
+      lowerTranscript.includes('yes') ||
+      lowerTranscript.includes('confirm') ||
+      lowerTranscript.includes('proceed') ||
+      lowerTranscript.includes('correct') ||
+      lowerTranscript.includes('yeah') ||
+      lowerTranscript.includes('ok') ||
+      lowerTranscript.includes('okay');
+
+    const isRejected =
+      lowerTranscript.includes('no') ||
+      lowerTranscript.includes('cancel') ||
+      lowerTranscript.includes('stop') ||
+      lowerTranscript.includes('wrong') ||
+      lowerTranscript.includes('edit') ||
+      lowerTranscript.includes('change');
+
+    if (isConfirmed) {
+      console.log('[VoicePipeline] User confirmed - submitting form');
+      await speakResponse("Perfect! Processing your payment now.");
+
+      // Submit the form by calling handleContinue
+      const handleContinue = formHandlers.handleContinue;
+      if (handleContinue && typeof handleContinue === 'function') {
+        // Small delay then submit
+        await new Promise(resolve => setTimeout(resolve, 500));
+        handleContinue();
+      }
+
+      // Stop guided mode
+      guidedForm.stopGuidedMode();
+    } else if (isRejected) {
+      console.log('[VoicePipeline] User rejected - offering to edit');
+      guidedForm.setAwaitingConfirmation(false);
+      guidedForm.setSelectingFieldToEdit(true);
+      await speakResponse("No problem. Which field would you like to change? You can say UPI ID, amount, or note.");
+
+      // Listen for which field to edit
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await startRecording();
+    } else {
+      // Unclear response - ask again
+      await speakResponse("I didn't catch that. Would you like to proceed with this payment? Please say yes or no.");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await startRecording();
+    }
+  }, [guidedForm, formHandlers, speakResponse, startRecording]);
+
+  /**
+   * Handle field selection when user wants to edit
+   */
+  const handleFieldSelection = useCallback(async (userTranscript: string) => {
+    console.log('[VoicePipeline] Handling field selection');
+    console.log('[VoicePipeline] User said:', userTranscript);
+
+    const lowerTranscript = userTranscript.toLowerCase();
+
+    // Map field labels to field names
+    let selectedFieldName: string | null = null;
+    if (lowerTranscript.includes('upi') || lowerTranscript.includes('id')) {
+      selectedFieldName = 'upiId';
+    } else if (lowerTranscript.includes('amount') || lowerTranscript.includes('money') || lowerTranscript.includes('rupee')) {
+      selectedFieldName = 'amount';
+    } else if (lowerTranscript.includes('note') || lowerTranscript.includes('message')) {
+      selectedFieldName = 'note';
+    } else if (lowerTranscript.includes('cancel') || lowerTranscript.includes('nevermind')) {
+      // User wants to cancel editing
+      guidedForm.setSelectingFieldToEdit(false);
+      await speakResponse("Okay, transaction cancelled.");
+      guidedForm.stopGuidedMode();
+      return;
+    }
+
+    if (selectedFieldName) {
+      console.log('[VoicePipeline] Selected field:', selectedFieldName);
+      const field = guidedForm.jumpToField(selectedFieldName);
+
+      if (field) {
+        guidedForm.setSelectingFieldToEdit(false);
+        await speakResponse(`Okay, let's update the ${field.label}. ${field.prompt}`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await startRecording();
+      } else {
+        await speakResponse("Sorry, I couldn't find that field. Please say UPI ID, amount, or note.");
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await startRecording();
+      }
+    } else {
+      // Unclear response
+      await speakResponse("I didn't catch which field you want to edit. Please say UPI ID, amount, or note.");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      await startRecording();
+    }
+  }, [guidedForm, speakResponse, startRecording]);
 
   /**
    * Synthesize and play response

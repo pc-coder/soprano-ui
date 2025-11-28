@@ -90,6 +90,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
       setNote,
       handleUpiIdBlur,
       handleAmountBlur,
+      handleContinue,
     });
   }, []);
 
