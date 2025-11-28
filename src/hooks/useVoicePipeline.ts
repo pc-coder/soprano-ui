@@ -291,7 +291,7 @@ export const useVoicePipeline = () => {
   /**
    * Start guided mode conversation - AI speaks first then listens
    */
-  const startGuidedConversation = useCallback(async (isFirstField: boolean = true) => {
+  const startGuidedConversation = useCallback(async () => {
     try {
       // Small delay to ensure state has updated
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -302,14 +302,21 @@ export const useVoicePipeline = () => {
         return;
       }
 
-      const prompt = isFirstField
-        ? `I'll help you fill this form. ${currentField.prompt}`
-        : currentField.prompt;
+      const progress = guidedForm.getProgress();
 
-      console.log('[VoicePipeline] Speaking initial prompt:', prompt);
+      // Give a summary and introduction
+      const summary = `I'll help you fill out this form. We have ${progress.total} fields to complete. Let's start.`;
 
-      // Speak the prompt
-      await speakResponse(prompt);
+      console.log('[VoicePipeline] Speaking summary and first field prompt');
+
+      // Speak the summary
+      await speakResponse(summary);
+
+      // Small pause between summary and question
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Ask for the first field
+      await speakResponse(currentField.prompt);
 
       // After speaking, automatically start listening
       console.log('[VoicePipeline] Auto-starting recording after prompt');

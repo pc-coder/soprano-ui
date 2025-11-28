@@ -73,12 +73,13 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
 
   const startGuidedMode = (fields: FormFieldDefinition[], refs: Record<string, React.RefObject<TextInput>>) => {
     console.log('[GuidedForm] Starting guided mode with', fields.length, 'fields');
+    console.log('[GuidedForm] First field:', fields[0]?.name, '-', fields[0]?.label);
     setFieldDefinitions(fields);
     setFormRefs(refs);
-    setIsGuidedMode(true);
     setCurrentFieldIndex(0);
     setCompletedFields([]);
     setConversationHistory([]);
+    setIsGuidedMode(true); // Set this last to ensure all state is ready
   };
 
   const stopGuidedMode = () => {
@@ -143,7 +144,11 @@ export const GuidedFormProvider: React.FC<GuidedFormProviderProps> = ({ children
   };
 
   const getCurrentField = (): FormFieldDefinition | null => {
-    return fieldDefinitions[currentFieldIndex] || null;
+    const field = fieldDefinitions[currentFieldIndex] || null;
+    if (isGuidedMode && !field) {
+      console.warn('[GuidedForm] getCurrentField returned null. Index:', currentFieldIndex, 'Total fields:', fieldDefinitions.length);
+    }
+    return field;
   };
 
   const isLastField = (): boolean => {
