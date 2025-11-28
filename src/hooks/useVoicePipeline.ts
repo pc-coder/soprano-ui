@@ -261,9 +261,9 @@ export const useVoicePipeline = () => {
             await startRecording();
           }
         } else {
-          // All fields completed - move to confirmation phase
-          console.log('[VoicePipeline] All fields completed, requesting confirmation');
-          await requestConfirmation();
+          // All fields completed - automatically submit
+          console.log('[VoicePipeline] All fields completed, auto-submitting');
+          await autoSubmitForm();
         }
         break;
       }
@@ -324,14 +324,17 @@ export const useVoicePipeline = () => {
   }, [guidedForm, formState, formRefs, formHandlers, fillField, speakResponse, startRecording]);
 
   /**
-   * Request confirmation after all fields are filled
+   * Auto-submit form after all fields are filled
    */
-  const requestConfirmation = useCallback(async () => {
-    console.log('[VoicePipeline] Generating summary for confirmation');
+  const autoSubmitForm = useCallback(async () => {
+    console.log('[VoicePipeline] Auto-submitting form');
 
-    // Generate summary from filled values
+    // Get the filled values from guided form
     const filledValues = guidedForm.getFilledValues();
-    let summary = "Great! Let me confirm the details. ";
+    console.log('[VoicePipeline] Filled values from conversation history:', filledValues);
+
+    // Generate summary message
+    let summary = "Perfect! ";
 
     // Format summary based on screen
     if (currentScreen === 'UPIPayment') {
@@ -339,23 +342,60 @@ export const useVoicePipeline = () => {
       const amount = filledValues.amount || '';
       const note = filledValues.note;
 
-      summary += `You're sending ${amount} rupees to ${upiId}`;
+      summary += `Processing payment of ${amount} rupees to ${upiId}`;
       if (note) {
         summary += ` with the note: ${note}`;
       }
-      summary += ". Would you like to proceed with this payment?";
+      summary += ".";
     }
 
-    // Set awaiting confirmation state
-    guidedForm.setAwaitingConfirmation(true);
-
-    // Speak summary and ask for confirmation
+    // Speak summary
     await speakResponse(summary);
 
-    // Start listening for confirmation
-    await new Promise(resolve => setTimeout(resolve, 200));
-    await startRecording();
-  }, [guidedForm, currentScreen, speakResponse, startRecording]);
+    // Stop guided mode
+    guidedForm.stopGuidedMode();
+
+    // Navigate directly using the values we collected
+    if (currentScreen === 'UPIPayment' && formHandlers.navigation) {
+      const upiIdValue = String(filledValues.upiId || '');
+      const amountValue = parseFloat(String(filledValues.amount || '0'));
+      const noteValue = String(filledValues.note || '');
+      const balanceValue = formHandlers.balance || 50000;
+
+      console.log('[VoicePipeline] Validating values before navigation:');
+      console.log('  upiId:', upiIdValue);
+      console.log('  amount:', amountValue);
+      console.log('  note:', noteValue);
+
+      // Validate before navigating
+      const { validateUPIId, validateAmount } = require('../utils/validation');
+      const { findPayeeByUPI, isNewPayee } = require('../data/mockPayees');
+
+      const upiValidation = validateUPIId(upiIdValue);
+      const amountValidation = validateAmount(amountValue, balanceValue);
+
+      if (upiValidation.valid && amountValidation.valid) {
+        const payee = findPayeeByUPI(upiIdValue);
+        const recipientName = payee?.name || upiIdValue.split('@')[0];
+        const isNewRecipient = isNewPayee(upiIdValue);
+
+        console.log('[VoicePipeline] Validation passed, navigating to UPIConfirm');
+        formHandlers.navigation.navigate('UPIConfirm', {
+          upiId: upiIdValue,
+          amount: amountValue,
+          note: noteValue || undefined,
+          recipientName,
+          isNewRecipient,
+        });
+      } else {
+        console.error('[VoicePipeline] Validation failed:', {
+          upiError: upiValidation.error,
+          amountError: amountValidation.error,
+        });
+        await speakResponse("Sorry, there was an error validating the payment details. Please try again.");
+      }
+    }
+  }, [guidedForm, currentScreen, speakResponse, formHandlers]);
 
   /**
    * Handle user's confirmation response
