@@ -2,9 +2,10 @@ import Constants from 'expo-constants';
 
 // API Configuration
 export const API_CONFIG = {
-  deepgram: {
-    apiKey: Constants.expoConfig?.extra?.DEEPGRAM_API_KEY || process.env.EXPO_PUBLIC_DEEPGRAM_API_KEY || '',
-    baseUrl: 'https://api.deepgram.com/v1',
+  openai: {
+    apiKey: Constants.expoConfig?.extra?.OPENAI_API_KEY || process.env.EXPO_PUBLIC_OPENAI_API_KEY || '',
+    baseUrl: 'https://api.openai.com/v1',
+    whisperModel: 'whisper-1',
   },
   anthropic: {
     apiKey: Constants.expoConfig?.extra?.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
@@ -25,7 +26,7 @@ export const API_CONFIG = {
 if (__DEV__) {
   const missingKeys: string[] = [];
 
-  if (!API_CONFIG.deepgram.apiKey) missingKeys.push('DEEPGRAM_API_KEY');
+  if (!API_CONFIG.openai.apiKey) missingKeys.push('OPENAI_API_KEY');
   if (!API_CONFIG.anthropic.apiKey) missingKeys.push('ANTHROPIC_API_KEY');
   if (!API_CONFIG.elevenlabs.apiKey) missingKeys.push('ELEVENLABS_API_KEY');
   if (!API_CONFIG.elevenlabs.voiceId) missingKeys.push('ELEVENLABS_VOICE_ID');

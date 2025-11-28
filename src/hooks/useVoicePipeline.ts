@@ -159,7 +159,7 @@ export const useVoicePipeline = () => {
 
       setStatus('processing');
 
-      // Step 1: Transcribe audio with Deepgram
+      // Step 1: Transcribe audio with OpenAI Whisper
       let transcript: string;
       try {
         transcript = await transcribeAudio(audioUri);

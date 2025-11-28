@@ -15,7 +15,7 @@ export interface GuidedContextData {
 }
 
 /**
- * Transcribe audio using Deepgram STT
+ * Transcribe audio using OpenAI Whisper STT
  */
 export const transcribeAudio = async (audioUri: string): Promise<string> => {
   const startTime = performance.now();
@@ -32,42 +32,46 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       encoding: EncodingType.Base64,
     });
 
-    // Convert base64 to Uint8Array
+    // Convert base64 to Blob for FormData
     const binaryString = atob(audioBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
+    const blob = new Blob([bytes], { type: 'audio/m4a' });
 
-    // Call Deepgram API with language detection
-    const deepgramResponse = await fetch(
-      `${API_CONFIG.deepgram.baseUrl}/listen?model=nova-2&smart_format=true&detect_language=true`,
+    // Create FormData with audio file
+    const formData = new FormData();
+    formData.append('file', blob, 'audio.m4a');
+    formData.append('model', API_CONFIG.openai.whisperModel);
+    formData.append('language', 'en'); // Can be removed for auto-detection, or set to specific language
+
+    // Call OpenAI Whisper API
+    const response = await fetch(
+      `${API_CONFIG.openai.baseUrl}/audio/transcriptions`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Token ${API_CONFIG.deepgram.apiKey}`,
-          'Content-Type': 'audio/m4a',
+          'Authorization': `Bearer ${API_CONFIG.openai.apiKey}`,
         },
-        body: bytes,
+        body: formData,
       }
     );
 
-    if (!deepgramResponse.ok) {
-      const error = await deepgramResponse.text();
-      throw new Error(`Deepgram API error: ${error}`);
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${error}`);
     }
 
-    const data = await deepgramResponse.json();
-    const transcript = data.results?.channels[0]?.alternatives[0]?.transcript;
-    const detectedLanguage = data.results?.channels[0]?.detected_language;
+    const data = await response.json();
+    const transcript = data.text;
 
     if (!transcript) {
-      throw new Error('No transcript returned from Deepgram');
+      throw new Error('No transcript returned from OpenAI');
     }
 
     const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-    const langInfo = detectedLanguage ? ` [${detectedLanguage}]` : '';
-    console.log(`[VoiceService] STT completed in ${duration}s${langInfo}: "${transcript}"`);
+    console.log(`[VoiceService] STT completed in ${duration}s: "${transcript}"`);
 
     return transcript;
   } catch (error: any) {

@@ -2,7 +2,7 @@
 
 ## Overview
 The voice pipeline uses:
-- **Deepgram** for Speech-to-Text
+- **OpenAI Whisper** for Speech-to-Text
 - **Anthropic Claude** for LLM responses
 - **ElevenLabs** for Text-to-Speech
 
@@ -10,10 +10,10 @@ The voice pipeline uses:
 
 ### 1. Get API Keys
 
-#### Deepgram API Key
-1. Sign up at [https://deepgram.com/](https://deepgram.com/)
-2. Create a new project
-3. Generate an API key
+#### OpenAI API Key
+1. Sign up at [https://platform.openai.com/](https://platform.openai.com/)
+2. Go to API Keys section
+3. Create a new API key
 4. Copy the key
 
 #### Anthropic API Key
@@ -38,7 +38,7 @@ The voice pipeline uses:
 
 2. Edit `.env` and add your API keys:
    ```env
-   EXPO_PUBLIC_DEEPGRAM_API_KEY=your_deepgram_api_key_here
+   EXPO_PUBLIC_OPENAI_API_KEY=your_openai_api_key_here
    EXPO_PUBLIC_ANTHROPIC_API_KEY=your_anthropic_api_key_here
    EXPO_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
    EXPO_PUBLIC_ELEVENLABS_VOICE_ID=your_voice_id_here
@@ -67,7 +67,7 @@ npm install
 4. Test the pipeline:
    - **Tap once** → Starts listening (mic button turns red with pulsing animation)
    - **Tap again** → Stops recording and processes:
-     - Transcribes audio with Deepgram
+     - Transcribes audio with OpenAI Whisper
      - Gets LLM response from Anthropic (with screen context)
      - Synthesizes speech with ElevenLabs
      - Plays audio response
@@ -119,7 +119,7 @@ The voice pipeline logs all steps to the console:
 [VoicePipeline] Starting recording...
 [VoicePipeline] Recording started
 [VoicePipeline] Stopping recording...
-[VoiceService] Transcribing audio with Deepgram...
+[VoiceService] Transcribing audio with OpenAI Whisper...
 [VoiceService] Transcription: "What's my balance?"
 [VoiceService] Getting LLM response from Anthropic...
 [VoiceService] LLM response: "Your current balance is ₹45,230..."
