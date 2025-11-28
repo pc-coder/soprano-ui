@@ -387,11 +387,49 @@ export const useVoicePipeline = () => {
       console.log('[VoicePipeline] User confirmed - submitting form');
       await speakResponse("Perfect! Processing your payment now.");
 
+      // Get the filled values from guided form
+      const filledValues = guidedForm.getFilledValues();
+      console.log('[VoicePipeline] Filled values:', filledValues);
+
+      // Update the form state with filled values before submitting
+      // This ensures handleContinue has the correct values
+      if (currentScreen === 'UPIPayment') {
+        const setters = {
+          upiId: formHandlers.setUpiId,
+          amount: formHandlers.setAmount,
+          note: formHandlers.setNote,
+        };
+
+        // Set all values in state synchronously
+        Object.entries(filledValues).forEach(([fieldName, value]) => {
+          const setter = setters[fieldName as keyof typeof setters];
+          if (setter && typeof setter === 'function') {
+            console.log(`[VoicePipeline] Setting ${fieldName} to:`, value);
+            setter(String(value));
+          }
+        });
+
+        // Trigger blur handlers to validate and clear any errors
+        const blurHandlers = {
+          upiId: formHandlers.handleUpiIdBlur,
+          amount: formHandlers.handleAmountBlur,
+        };
+
+        Object.entries(filledValues).forEach(([fieldName, value]) => {
+          const blurHandler = blurHandlers[fieldName as keyof typeof blurHandlers];
+          if (blurHandler && typeof blurHandler === 'function') {
+            console.log(`[VoicePipeline] Calling blur handler for ${fieldName}`);
+            blurHandler();
+          }
+        });
+
+        // Delay to let all state updates and validation complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
       // Submit the form by calling handleContinue
       const handleContinue = formHandlers.handleContinue;
       if (handleContinue && typeof handleContinue === 'function') {
-        // Small delay then submit
-        await new Promise(resolve => setTimeout(resolve, 500));
         handleContinue();
       }
 
@@ -412,7 +450,7 @@ export const useVoicePipeline = () => {
       await new Promise(resolve => setTimeout(resolve, 200));
       await startRecording();
     }
-  }, [guidedForm, formHandlers, speakResponse, startRecording]);
+  }, [guidedForm, formHandlers, speakResponse, startRecording, currentScreen]);
 
   /**
    * Handle field selection when user wants to edit
