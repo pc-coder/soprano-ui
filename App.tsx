@@ -7,7 +7,6 @@ import { VoiceProvider } from './src/context/VoiceContext';
 import { GuidedFormProvider } from './src/context/GuidedFormContext';
 import { VisualGuideProvider } from './src/context/VisualGuideContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { ContextDebugOverlay } from './src/components/ContextDebugOverlay';
 import { VisualGuideOverlay } from './src/components/VisualGuideOverlay';
 
 export default function App() {
@@ -19,7 +18,6 @@ export default function App() {
             <VisualGuideProvider>
               <StatusBar barStyle="light-content" />
               <AppNavigator />
-              <ContextDebugOverlay />
               <VisualGuideOverlay />
             </VisualGuideProvider>
           </GuidedFormProvider>
