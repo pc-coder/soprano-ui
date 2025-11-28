@@ -40,6 +40,9 @@ export const serializeContextForLLM = (context: ScreenContextData): string => {
     case 'UPISuccess':
       description += serializeUPISuccessContext(screenData);
       break;
+    case 'LoanApplication':
+      description += serializeLoanApplicationContext(formState);
+      break;
     default:
       description += serializeGenericContext(screenData, formState);
   }
@@ -148,6 +151,33 @@ function serializeUPISuccessContext(data: Record<string, any>): string {
 
   if (data.recipientName) {
     desc += `- Sent to: ${data.recipientName}\n`;
+  }
+
+  return desc;
+}
+
+function serializeLoanApplicationContext(formState: Record<string, any>): string {
+  let desc = 'Loan Application Form:\n';
+
+  const loanAmount = formState.loanAmount || '';
+  const address = formState.address || '';
+  const panNumber = formState.panNumber || '';
+  const errors = formState.errors || {};
+  const focusedField = formState.focusedField;
+
+  desc += `- Loan amount field: ${loanAmount || '(empty)'}\n`;
+  desc += `- Address field: ${address || '(empty)'}\n`;
+  desc += `- PAN number field: ${panNumber || '(empty)'}\n`;
+
+  if (focusedField) {
+    desc += `- User is currently focused on: ${focusedField}\n`;
+  }
+
+  if (errors && Object.keys(errors).length > 0) {
+    desc += '- Validation errors:\n';
+    Object.entries(errors).forEach(([field, error]) => {
+      if (error) desc += `  • ${field}: ${error}\n`;
+    });
   }
 
   return desc;

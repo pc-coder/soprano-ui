@@ -37,27 +37,16 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   // Refs for all input fields
   const loanAmountRef = useRef<TextInput>(null);
-  const addressLine1Ref = useRef<TextInput>(null);
-  const addressLine2Ref = useRef<TextInput>(null);
-  const cityRef = useRef<TextInput>(null);
-  const stateRef = useRef<TextInput>(null);
-  const pincodeRef = useRef<TextInput>(null);
+  const addressRef = useRef<TextInput>(null);
   const panNumberRef = useRef<TextInput>(null);
 
   // Form state
   const [loanAmount, setLoanAmount] = useState('');
-  const [addressLine1, setAddressLine1] = useState('');
-  const [addressLine2, setAddressLine2] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [pincode, setPincode] = useState('');
+  const [address, setAddress] = useState('');
   const [panNumber, setPanNumber] = useState('');
   const [errors, setErrors] = useState<{
     loanAmount?: string;
-    addressLine1?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
+    address?: string;
     panNumber?: string;
   }>({});
   const [focusedField, setFocusedField] = useState<string | null>(null);
@@ -70,37 +59,25 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     // Update form state for Soprano context
     updateFormState({
       loanAmount,
-      addressLine1,
-      addressLine2,
-      city,
-      state,
-      pincode,
+      address,
       panNumber,
       errors,
       focusedField,
     });
-  }, [loanAmount, addressLine1, addressLine2, city, state, pincode, panNumber, errors, focusedField]);
+  }, [loanAmount, address, panNumber, errors, focusedField]);
 
   useEffect(() => {
     // Register form refs for guided mode
     registerFormRefs({
       loanAmountRef,
-      addressLine1Ref,
-      addressLine2Ref,
-      cityRef,
-      stateRef,
-      pincodeRef,
+      addressRef,
       panNumberRef,
     });
 
     // Register form handlers for guided mode
     registerFormHandlers({
       setLoanAmount,
-      setAddressLine1,
-      setAddressLine2,
-      setCity,
-      setState,
-      setPincode,
+      setAddress,
       setPanNumber,
       handleSubmit,
     });
@@ -117,50 +94,23 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
       return false;
     }
     if (amount < 10000) {
-      setErrors((prev) => ({ ...prev, loanAmount: 'Minimum loan amount is ₹10,000' }));
+      setErrors((prev) => ({ ...prev, loanAmount: 'Minimum loan amount is 10,000 rupees' }));
       return false;
     }
     setErrors((prev) => ({ ...prev, loanAmount: undefined }));
     return true;
   };
 
-  const validateAddressLine1 = () => {
-    if (!addressLine1.trim()) {
-      setErrors((prev) => ({ ...prev, addressLine1: 'Address is required' }));
+  const validateAddress = () => {
+    if (!address.trim()) {
+      setErrors((prev) => ({ ...prev, address: 'Address is required' }));
       return false;
     }
-    setErrors((prev) => ({ ...prev, addressLine1: undefined }));
-    return true;
-  };
-
-  const validateCity = () => {
-    if (!city.trim()) {
-      setErrors((prev) => ({ ...prev, city: 'City is required' }));
+    if (address.length < 20) {
+      setErrors((prev) => ({ ...prev, address: 'Please provide complete address' }));
       return false;
     }
-    setErrors((prev) => ({ ...prev, city: undefined }));
-    return true;
-  };
-
-  const validateState = () => {
-    if (!state.trim()) {
-      setErrors((prev) => ({ ...prev, state: 'State is required' }));
-      return false;
-    }
-    setErrors((prev) => ({ ...prev, state: undefined }));
-    return true;
-  };
-
-  const validatePincode = () => {
-    if (!pincode.trim()) {
-      setErrors((prev) => ({ ...prev, pincode: 'Pincode is required' }));
-      return false;
-    }
-    if (!/^\d{6}$/.test(pincode)) {
-      setErrors((prev) => ({ ...prev, pincode: 'Pincode must be 6 digits' }));
-      return false;
-    }
-    setErrors((prev) => ({ ...prev, pincode: undefined }));
+    setErrors((prev) => ({ ...prev, address: undefined }));
     return true;
   };
 
@@ -179,21 +129,22 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleAddressDataExtracted = (data: DocumentData) => {
-    // Auto-fill address fields from scanned document
-    if (data.addressLine1) setAddressLine1(data.addressLine1);
-    if (data.addressLine2) setAddressLine2(data.addressLine2);
-    if (data.city) setCity(data.city);
-    if (data.state) setState(data.state);
-    if (data.pincode) setPincode(data.pincode);
+    // Combine all address fields into a single string
+    const fullAddress = [
+      data.addressLine1,
+      data.addressLine2,
+      data.city,
+      data.state,
+      data.pincode,
+    ]
+      .filter(Boolean)
+      .join(', ');
 
-    // Clear address-related errors
-    setErrors((prev) => ({
-      ...prev,
-      addressLine1: undefined,
-      city: undefined,
-      state: undefined,
-      pincode: undefined,
-    }));
+    if (fullAddress) {
+      setAddress(fullAddress);
+      // Clear address error
+      setErrors((prev) => ({ ...prev, address: undefined }));
+    }
   };
 
   const handlePANDataExtracted = (data: DocumentData) => {
@@ -206,13 +157,10 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSubmit = () => {
     const isLoanAmountValid = validateLoanAmount();
-    const isAddressValid = validateAddressLine1();
-    const isCityValid = validateCity();
-    const isStateValid = validateState();
-    const isPincodeValid = validatePincode();
+    const isAddressValid = validateAddress();
     const isPanValid = validatePanNumber();
 
-    if (isLoanAmountValid && isAddressValid && isCityValid && isStateValid && isPincodeValid && isPanValid) {
+    if (isLoanAmountValid && isAddressValid && isPanValid) {
       // Navigate to confirmation screen or show success message
       // For now, just navigate back to dashboard
       navigation.goBack();
@@ -221,16 +169,10 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   const isFormValid =
     loanAmount.trim() !== '' &&
-    addressLine1.trim() !== '' &&
-    city.trim() !== '' &&
-    state.trim() !== '' &&
-    pincode.trim() !== '' &&
+    address.trim() !== '' &&
     panNumber.trim() !== '' &&
     !errors.loanAmount &&
-    !errors.addressLine1 &&
-    !errors.city &&
-    !errors.state &&
-    !errors.pincode &&
+    !errors.address &&
     !errors.panNumber;
 
   // Check if a field is currently active in guided mode
@@ -282,76 +224,20 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
           />
           <View style={{ height: spacing.md }} />
           <InputField
-            label="Address Line 1"
-            value={addressLine1}
-            onChangeText={setAddressLine1}
-            placeholder="House/Flat No., Building Name"
-            error={errors.addressLine1}
-            onFocus={() => setFocusedField('addressLine1')}
+            label="Complete Address"
+            value={address}
+            onChangeText={setAddress}
+            placeholder="House No., Street, Area, City, State, Pincode"
+            multiline
+            numberOfLines={4}
+            error={errors.address}
+            onFocus={() => setFocusedField('address')}
             onBlur={() => {
-              validateAddressLine1();
+              validateAddress();
               setFocusedField(null);
             }}
-            inputRef={addressLine1Ref}
-            isGuidedActive={isFieldGuidedActive('addressLine1')}
-          />
-          <View style={{ height: spacing.md }} />
-          <InputField
-            label="Address Line 2"
-            value={addressLine2}
-            onChangeText={setAddressLine2}
-            placeholder="Street, Area, Locality (Optional)"
-            onFocus={() => setFocusedField('addressLine2')}
-            onBlur={() => setFocusedField(null)}
-            inputRef={addressLine2Ref}
-            isGuidedActive={isFieldGuidedActive('addressLine2')}
-          />
-          <View style={{ height: spacing.md }} />
-          <InputField
-            label="City"
-            value={city}
-            onChangeText={setCity}
-            placeholder="Enter city"
-            error={errors.city}
-            onFocus={() => setFocusedField('city')}
-            onBlur={() => {
-              validateCity();
-              setFocusedField(null);
-            }}
-            inputRef={cityRef}
-            isGuidedActive={isFieldGuidedActive('city')}
-          />
-          <View style={{ height: spacing.md }} />
-          <InputField
-            label="State"
-            value={state}
-            onChangeText={setState}
-            placeholder="Enter state"
-            error={errors.state}
-            onFocus={() => setFocusedField('state')}
-            onBlur={() => {
-              validateState();
-              setFocusedField(null);
-            }}
-            inputRef={stateRef}
-            isGuidedActive={isFieldGuidedActive('state')}
-          />
-          <View style={{ height: spacing.md }} />
-          <InputField
-            label="Pincode"
-            value={pincode}
-            onChangeText={setPincode}
-            placeholder="6-digit pincode"
-            keyboardType="numeric"
-            maxLength={6}
-            error={errors.pincode}
-            onFocus={() => setFocusedField('pincode')}
-            onBlur={() => {
-              validatePincode();
-              setFocusedField(null);
-            }}
-            inputRef={pincodeRef}
-            isGuidedActive={isFieldGuidedActive('pincode')}
+            inputRef={addressRef}
+            isGuidedActive={isFieldGuidedActive('address')}
           />
         </View>
 
