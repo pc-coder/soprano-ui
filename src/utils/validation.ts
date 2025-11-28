@@ -50,7 +50,7 @@ export const validateIFSC = (ifsc: string): ValidationResult => {
   if (!ifscRegex.test(ifsc.toUpperCase())) {
     return {
       valid: false,
-      error: 'Invalid IFSC format. Should be like SBIN0001234 (5th character must be 0)'
+      error: 'Invalid IFSC format. Should be like MBNK0001234 (5th character must be 0)'
     };
   }
 

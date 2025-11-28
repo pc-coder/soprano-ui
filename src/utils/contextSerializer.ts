@@ -292,7 +292,7 @@ SPECIAL CASES:
 - If field is "address" or "panNumber" and user says "scan" OR mentions document/card/Aadhaar/having it on card: {"action": "scan_document", "documentType": "address" or "pan", "message": "Sure! Let me open the camera to scan your document."}
 
 VALUE EXTRACTION RULES:
-- For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi", "priya at phonepe" → "priya@phonepe"
+- For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at mbank" → "john@mbank", "priya at phonepe" → "priya@phonepe"
 - For amounts: Convert "five hundred rupees" → "500", "two thousand five hundred" → "2500", "fifteen thousand" → "15000"
   - Also handle: "one lakh" → "100000", "two lakh fifty thousand" → "250000"
 - For text: Extract as-is
@@ -318,7 +318,7 @@ GUIDELINES:
 Example good responses:
 - "I see you're on the dashboard. Your current balance is 45,230 rupees. Would you like to review recent transactions or make a UPI payment?"
 - "You're filling out a UPI payment form. I notice the amount field is empty - how many rupees would you like to send?"
-- "Looks like there's an error with the UPI ID format. It should look like username at bank name, for example: ramesh at oksbi or priya at phonepe"`;
+- "Looks like there's an error with the UPI ID format. It should look like username at bank name, for example: ramesh at mbank or priya at phonepe"`;
 
     // Add navigation assistance if element registry is provided
     if (elementRegistry && elementRegistry.length > 0) {

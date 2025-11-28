@@ -216,7 +216,7 @@ export const mockUser: User = {
   name: 'Ramesh Kumar',
   phone: '9876543210',
   email: 'ramesh.kumar@email.com',
-  upiId: 'ramesh.kumar@oksbi',
+  upiId: 'ramesh.kumar@mbank',
   accounts: [
     {
       id: 'acc_001',
@@ -224,8 +224,8 @@ export const mockUser: User = {
       number: '1234567890',
       maskedNumber: '****7890',
       balance: 45230.50,
-      bankName: 'State Bank of India',
-      ifsc: 'SBIN0001234',
+      bankName: 'MBank',
+      ifsc: 'MBNK0001234',
     },
   ],
 };
@@ -608,7 +608,7 @@ export const validateIFSC = (ifsc: string): ValidationResult => {
   if (!ifscRegex.test(ifsc.toUpperCase())) {
     return { 
       valid: false, 
-      error: 'Invalid IFSC format. Should be like SBIN0001234 (5th character must be 0)' 
+      error: 'Invalid IFSC format. Should be like MBNK0001234 (5th character must be 0)' 
     };
   }
   
