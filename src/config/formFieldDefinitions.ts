@@ -60,7 +60,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'address',
       label: 'Address',
-      prompt: 'What is your complete address in India? Please include house number, street, area, city, state, and pincode.',
+      prompt: 'What is your complete address in India? You can tell me verbally, or if you have a document like Aadhaar card, just say scan and I will use the camera.',
       validation: (value: string) => {
         if (!value.trim()) {
           return { valid: false, error: 'Address is required' };
@@ -77,7 +77,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'panNumber',
       label: 'PAN Number',
-      prompt: 'What is your Indian PAN card number? It should be in the format A B C D E 1 2 3 4 F.',
+      prompt: 'What is your Indian PAN card number? You can tell me the number, or say scan to capture it from your PAN card using the camera.',
       validation: (value: string) => {
         if (!value.trim()) {
           return { valid: false, error: 'PAN number is required' };

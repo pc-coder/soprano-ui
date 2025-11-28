@@ -289,7 +289,7 @@ SPECIAL CASES:
 - If user says "go back" or "change previous": {"action": "go_back", "message": "Going back to the previous field"}
 - If user says "cancel" or "stop": {"action": "cancel", "message": "Canceling form filling"}
 - If response is unclear: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
-- If field is "address" or "panNumber" and user mentions document/card/scan OR it would be easier: {"action": "scan_document", "documentType": "address" or "pan", "message": "I can scan your address document using the camera. Would you like me to do that?"}
+- If field is "address" or "panNumber" and user says "scan" OR mentions document/card/Aadhaar/having it on card: {"action": "scan_document", "documentType": "address" or "pan", "message": "Sure! Let me open the camera to scan your document."}
 
 VALUE EXTRACTION RULES:
 - For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi", "priya at phonepe" → "priya@phonepe"
