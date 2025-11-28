@@ -15,7 +15,7 @@ import { useScreenContext } from '../context/ScreenContext';
 import { BalanceCard } from '../components/BalanceCard';
 import { QuickActions } from '../components/QuickActions';
 import { TransactionList } from '../components/TransactionList';
-import { SopranoPlaceholder } from '../components/SopranoPlaceholder';
+import { Soprano } from '../components/Soprano';
 import { Card } from '../components/Card';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -146,7 +146,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <SopranoPlaceholder />
+      <Soprano />
     </SafeAreaView>
   );
 };

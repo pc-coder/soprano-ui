@@ -16,7 +16,7 @@ import { useScreenContext } from '../context/ScreenContext';
 import { InputField } from '../components/InputField';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { SopranoPlaceholder } from '../components/SopranoPlaceholder';
+import { Soprano } from '../components/Soprano';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -220,7 +220,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <SopranoPlaceholder />
+      <Soprano />
     </KeyboardAvoidingView>
   );
 };

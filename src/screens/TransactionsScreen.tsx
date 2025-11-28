@@ -12,7 +12,7 @@ import { RootStackParamList } from '../navigation/AppNavigator';
 import { useApp } from '../context/AppContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { TransactionItem } from '../components/TransactionItem';
-import { SopranoPlaceholder } from '../components/SopranoPlaceholder';
+import { Soprano } from '../components/Soprano';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -124,7 +124,7 @@ const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
         stickySectionHeadersEnabled={true}
       />
 
-      <SopranoPlaceholder />
+      <Soprano />
     </View>
   );
 };

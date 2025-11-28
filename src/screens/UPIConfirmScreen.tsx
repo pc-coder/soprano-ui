@@ -7,7 +7,7 @@ import { useApp } from '../context/AppContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { SopranoPlaceholder } from '../components/SopranoPlaceholder';
+import { Soprano } from '../components/Soprano';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -123,7 +123,7 @@ const UPIConfirmScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <SopranoPlaceholder />
+      <Soprano />
     </View>
   );
 };
