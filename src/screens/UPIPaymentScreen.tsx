@@ -25,7 +25,6 @@ import { spacing } from '../theme/spacing';
 import { validateUPIId, validateAmount } from '../utils/validation';
 import { formatCurrency } from '../utils/formatters';
 import { findPayeeByUPI, isNewPayee } from '../data/mockPayees';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 type UPIPaymentScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -196,14 +195,6 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
             inputRef={upiIdRef}
             isGuidedActive={isFieldGuidedActive('upiId')}
           />
-          <TouchableOpacity style={styles.scanButton} activeOpacity={0.7}>
-            <MaterialCommunityIcons
-              name="qrcode-scan"
-              size={20}
-              color={colors.primary}
-            />
-            <Text style={styles.scanButtonText}>Scan QR Code</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -291,19 +282,6 @@ const styles = StyleSheet.create({
     ...typography.h3,
     color: colors.textPrimary,
     marginBottom: spacing.md,
-  },
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.sm,
-  },
-  scanButtonText: {
-    ...typography.body,
-    color: colors.primary,
-    marginLeft: spacing.sm,
-    fontWeight: '600',
   },
   accountCard: {
     backgroundColor: colors.surface,
