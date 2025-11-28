@@ -24,15 +24,31 @@ interface ScreenContextProviderProps {
 }
 
 export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ children }) => {
-  const [currentScreen, setCurrentScreen] = useState<string>('Dashboard');
+  const [currentScreen, setCurrentScreenState] = useState<string>('Dashboard');
   const [screenData, setScreenData] = useState<Record<string, any>>({});
   const [formState, setFormState] = useState<Record<string, any>>({});
 
+  const setCurrentScreen = (screen: string) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[ScreenContext] ${timestamp} - Screen Changed: ${currentScreen} → ${screen}`);
+    setCurrentScreenState(screen);
+  };
+
   const updateScreenData = (data: Record<string, any>) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[ScreenContext] ${timestamp} - Screen Data Updated:`, {
+      screen: currentScreen,
+      data,
+    });
     setScreenData(prev => ({ ...prev, ...data }));
   };
 
   const updateFormState = (data: Record<string, any>) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[ScreenContext] ${timestamp} - Form State Updated:`, {
+      screen: currentScreen,
+      formState: data,
+    });
     setFormState(prev => ({ ...prev, ...data }));
   };
 
