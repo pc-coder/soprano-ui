@@ -10,6 +10,25 @@ export const formatCurrency = (amount: number): string => {
   return amount < 0 ? `-${formatted}` : formatted;
 };
 
+/**
+ * Format currency for Text-to-Speech (TTS) output
+ * Outputs "rupees" instead of ₹ symbol for proper voice pronunciation
+ * @example formatCurrencyForTTS(5000) => "5,000 rupees"
+ * @example formatCurrencyForTTS(450.50) => "450.50 rupees"
+ */
+export const formatCurrencyForTTS = (amount: number): string => {
+  const absAmount = Math.abs(amount);
+  const formatted = new Intl.NumberFormat('en-IN', {
+    minimumFractionDigits: absAmount % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(absAmount);
+
+  // Add "rupee" or "rupees" suffix
+  const suffix = absAmount === 1 ? 'rupee' : 'rupees';
+
+  return amount < 0 ? `minus ${formatted} ${suffix}` : `${formatted} ${suffix}`;
+};
+
 export const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   const now = new Date();

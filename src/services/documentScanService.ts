@@ -151,29 +151,31 @@ export const extractDocumentData = async (
  */
 const getPromptForDocumentType = (documentType: DocumentType): string => {
   if (documentType === 'address') {
-    return `Analyze this address document and extract the address details.
+    return `Analyze this Indian address document (Aadhaar card, utility bill, etc.) and extract the address details.
 Return ONLY a JSON object (no markdown, no code blocks) with these fields:
 {
   "addressLine1": "house/flat number and building name",
   "addressLine2": "street, area, locality",
   "city": "city name",
-  "state": "state name",
-  "pincode": "6-digit pincode"
+  "state": "Indian state name",
+  "pincode": "6-digit Indian pincode"
 }
 
 Rules:
-- Extract the complete address from the document
+- Extract the complete Indian address from the document
 - If any field is not found, use empty string ""
-- Ensure pincode is exactly 6 digits
+- Ensure pincode is exactly 6 digits (Indian postal code format)
+- State should be an Indian state name (e.g., Maharashtra, Karnataka, Tamil Nadu)
 - Return ONLY the JSON object, nothing else`;
   } else {
-    return `Analyze this PAN card and extract the PAN number.
+    return `Analyze this Indian PAN card and extract the PAN number.
 Return ONLY a JSON object (no markdown, no code blocks) with this field:
 {
   "panNumber": "10-character PAN number in format ABCDE1234F"
 }
 
 Rules:
+- PAN (Permanent Account Number) is an Indian tax identifier
 - PAN format is 5 letters, 4 digits, 1 letter (e.g., ABCDE1234F)
 - Return in uppercase
 - If not found or invalid, use empty string ""

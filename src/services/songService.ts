@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { EncodingType } from 'expo-file-system/legacy';
 import { API_CONFIG } from '../config/api';
 import { Transaction } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrencyForTTS } from '../utils/formatters';
 
 /**
  * Analyze transactions for song generation
@@ -85,27 +85,31 @@ export const generateSpendingSong = async (transactions: Transaction[]): Promise
       apiKey: API_CONFIG.anthropic.apiKey,
     });
 
-    const prompt = `You are a creative songwriter. Write a SHORT, CATCHY song (rap/pop style) about someone's spending habits. Keep it to 8-12 lines max.
+    const prompt = `You are a creative songwriter. Write a SHORT, CATCHY song (rap/pop style) about an Indian user's spending habits. Keep it to 8-12 lines max.
+
+IMPORTANT: This is for Text-to-Speech. Always say "rupees" for currency, never use ₹, Rs, or K (for thousands).
 
 SPENDING DATA (ALL TIME):
-- Total spending: ${formatCurrency(analysis.totalSpending)}
-- Total income: ${formatCurrency(analysis.totalIncome)}
+- Total spending: ${formatCurrencyForTTS(analysis.totalSpending)}
+- Total income: ${formatCurrencyForTTS(analysis.totalIncome)}
 - Total transactions: ${analysis.transactionCount}
-- Food delivery orders: ${analysis.foodDeliveryCount} (${formatCurrency(analysis.foodDeliveryTotal)})
+- Food delivery orders: ${analysis.foodDeliveryCount} (${formatCurrencyForTTS(analysis.foodDeliveryTotal)})
 
 Top spending categories:
-${analysis.topCategories.map(([cat, amt]) => `- ${cat}: ${formatCurrency(amt)}`).join('\n')}
+${analysis.topCategories.map(([cat, amt]) => `- ${cat}: ${formatCurrencyForTTS(amt)}`).join('\n')}
 
-Most frequent merchants:
+Most frequent merchants (popular Indian apps):
 ${analysis.topMerchants.map(([name, count]) => `- ${name}: ${count} times`).join('\n')}
 
 SONG REQUIREMENTS:
 - 8-12 lines maximum (SHORT for TTS)
 - Catchy, rhythmic, easy to rap/sing
-- Funny observations about spending habits
-- Reference specific merchants and amounts
+- Funny observations about spending habits in India
+- Reference Indian merchants (Swiggy, Zomato, Paytm, PhonePe, Zerodha, etc.)
+- Reference UPI payments and digital wallet culture
 - Use rhyming scheme (AABB or ABAB)
-- Conversational, relatable tone
+- Conversational, relatable tone for Indian youth
+- ALWAYS say "rupees" for amounts, spell out numbers
 - Include hook/chorus if possible
 
 STYLE EXAMPLES:
@@ -115,9 +119,14 @@ Netflix and Prime, subscriptions on repeat,
 Bank balance declining, but the vibes are sweet!"
 
 "Food delivery king, that's my crown,
-Forty-five K income but the spending's going down,
+Forty-five thousand rupees income but the spending's going down,
 Zerodha investments trying to be wise,
 But Swiggy's got me hypnotized!"
+
+"UPI payments flying left and right,
+PhonePe and Paytm, spending every night,
+Five hundred here, two thousand there,
+Wallet's getting empty but I just don't care!"
 
 Generate a SHORT, catchy song (8-12 lines). Return ONLY the lyrics, no title or explanation.`;
 

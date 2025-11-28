@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { API_CONFIG } from '../config/api';
 import { Transaction } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrencyForTTS } from '../utils/formatters';
 
 /**
  * Analyze transaction patterns for commentary generation
@@ -84,7 +84,9 @@ const analyzeTransactions = (transactions: Transaction[]) => {
 const createCommentaryPrompt = (transactions: Transaction[]): string => {
   const analysis = analyzeTransactions(transactions);
 
-  let prompt = `You are a witty, friendly AI assistant analyzing someone's spending patterns. Generate SHORT, conversational commentary about their transactions.
+  let prompt = `You are a witty, friendly AI assistant analyzing an Indian user's spending patterns. Generate SHORT, conversational commentary about their transactions.
+
+IMPORTANT: This is for Text-to-Speech. Always say "rupees" for currency, never use ₹ or Rs symbols.
 
 TRANSACTION DATA:
 `;
@@ -94,16 +96,16 @@ TRANSACTION DATA:
   transactions.slice(0, 10).forEach(t => {
     const date = new Date(t.date);
     const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-    prompt += `- ${dayName}: ${t.name} - ${formatCurrency(t.amount)} (${t.status})\n`;
+    prompt += `- ${dayName}: ${t.name} - ${formatCurrencyForTTS(t.amount)} (${t.status})\n`;
   });
 
   // Spending patterns
   if (analysis.highestSpendingDay) {
-    prompt += `\nHighest spending day: ${analysis.highestSpendingDay[0]} with ${formatCurrency(analysis.highestSpendingDay[1])}\n`;
+    prompt += `\nHighest spending day: ${analysis.highestSpendingDay[0]} with ${formatCurrencyForTTS(analysis.highestSpendingDay[1])}\n`;
   }
 
   if (analysis.topMerchant) {
-    prompt += `Top merchant: ${analysis.topMerchant[0]} (${analysis.topMerchant[1].count} transactions, ${formatCurrency(analysis.topMerchant[1].total)} total)\n`;
+    prompt += `Top merchant: ${analysis.topMerchant[0]} (${analysis.topMerchant[1].count} transactions, ${formatCurrencyForTTS(analysis.topMerchant[1].total)} total)\n`;
   }
 
   // Food delivery addiction
@@ -113,21 +115,21 @@ TRANSACTION DATA:
   if (foodDelivery.length > 0) {
     const totalFood = foodDelivery.reduce((sum, [_, data]) => sum + data.total, 0);
     const totalOrders = foodDelivery.reduce((sum, [_, data]) => sum + data.count, 0);
-    prompt += `Food delivery: ${totalOrders} orders, ${formatCurrency(totalFood)} total\n`;
+    prompt += `Food delivery: ${totalOrders} orders, ${formatCurrencyForTTS(totalFood)} total\n`;
   }
 
   // Pending transactions
   if (analysis.pendingTransactions.length > 0) {
     prompt += `\nPending transactions:\n`;
     analysis.pendingTransactions.forEach(t => {
-      prompt += `- ${t.name}: ${formatCurrency(t.amount)}\n`;
+      prompt += `- ${t.name}: ${formatCurrencyForTTS(t.amount)}\n`;
     });
   }
 
   // Investments vs spending
   if (analysis.totalInvestment > 0) {
-    prompt += `\nInvestments: ${formatCurrency(analysis.totalInvestment)}\n`;
-    prompt += `Other spending: ${formatCurrency(analysis.totalSpending)}\n`;
+    prompt += `\nInvestments: ${formatCurrencyForTTS(analysis.totalInvestment)}\n`;
+    prompt += `Other spending: ${formatCurrencyForTTS(analysis.totalSpending)}\n`;
   }
 
   prompt += `
@@ -136,15 +138,16 @@ STYLE GUIDELINES:
 - Be funny, friendly, slightly cheeky but supportive
 - Make specific observations about patterns (heavy spending days, repeated merchants, pending payments)
 - Comment on investments vs spending if relevant
+- Reference Indian payment systems (UPI, NEFT, IMPS) and merchants (Swiggy, Zomato, Paytm, PhonePe)
 - Decode mysterious merchant names if any (like "BIL*BGBLLRMEPG" = Bajaj EMI)
 - Use conversational language with light humor
-- Include rupee amounts for context
+- ALWAYS say "rupees" for amounts, never use ₹ or Rs
 - Don't lecture or give advice, just make witty observations
 
 EXAMPLES OF GOOD COMMENTARY:
-"Monday was rough — ₹3,400 on food delivery alone. Tuesday you recovered, very disciplined. Wednesday... that ₹15,000 to Priya. Still pending. Shall I remind her, or are we still being polite?"
+"Monday was rough — 3,400 rupees on food delivery alone. Tuesday you recovered, very disciplined. Wednesday... that 15,000 rupees to Priya. Still pending. Shall I remind her, or are we still being polite?"
 
-"Your mutual funds grew ₹4,600 this month. That's money you made while sleeping. Meanwhile, your FD earned ₹800. Just putting that out there. No pressure."
+"Your mutual funds grew 4,600 rupees this month. That's money you made while sleeping. Meanwhile, your FD earned 800 rupees. Just putting that out there. No pressure."
 
 "Swiggy: 12 orders this month. That's almost every other day. The restaurant industry thanks you for your service."
 
@@ -220,10 +223,12 @@ const createSpotlightPrompt = (transaction: Transaction, allTransactions: Transa
   const sameMerchant = allTransactions.filter(t => t.name === transaction.name);
   const sameCategory = allTransactions.filter(t => t.category === transaction.category);
 
-  let prompt = `You are a witty sports commentator narrating someone's spending. Generate a VERY SHORT (1-2 sentences max) funny comment about this transaction.
+  let prompt = `You are a witty sports commentator narrating an Indian user's spending. Generate a VERY SHORT (1-2 sentences max) funny comment about this transaction.
+
+IMPORTANT: This is for Text-to-Speech. Always say "rupees" for currency, never use ₹ or Rs symbols.
 
 TRANSACTION:
-${transaction.name} - ${formatCurrency(transaction.amount)}
+${transaction.name} - ${formatCurrencyForTTS(transaction.amount)}
 Category: ${transaction.category}
 Day: ${dayName}
 Status: ${transaction.status}
@@ -245,12 +250,12 @@ Status: ${transaction.status}
   prompt += `
 
 EXAMPLES OF GOOD COMMENTARY:
-"₹3,400 on Swiggy. Again. The restaurant industry thanks you for your loyal patronage."
-"That's ₹15,000 to Priya. Still pending. Shall I remind her, or are we still being polite?"
-"Netflix subscription renewed. ₹649 well spent. Can't put a price on avoiding human interaction."
+"3,400 rupees on Swiggy. Again. The restaurant industry thanks you for your loyal patronage."
+"That's 15,000 rupees to Priya via UPI. Still pending. Shall I remind her, or are we still being polite?"
+"Netflix subscription renewed. 649 rupees well spent. Can't put a price on avoiding human interaction."
 "Zerodha investment. Look at you, being financially responsible while scrolling."
 
-Generate ONE SHORT witty comment (1-2 sentences max) about THIS transaction. Make it conversational and funny. Return ONLY the comment, no preamble.`;
+Generate ONE SHORT witty comment (1-2 sentences max) about THIS transaction. Make it conversational and funny. ALWAYS say "rupees" for amounts. Return ONLY the comment, no preamble.`;
 
   return prompt;
 };

@@ -1,4 +1,4 @@
-import { formatCurrency } from './formatters';
+import { formatCurrency, formatCurrencyForTTS } from './formatters';
 import { FormFieldDefinition, ConversationEntry } from '../context/GuidedFormContext';
 
 interface ScreenContextData {
@@ -51,7 +51,7 @@ function serializeDashboardContext(data: Record<string, any>): string {
   let desc = 'Dashboard Overview:\n';
 
   if (data.balance !== undefined) {
-    desc += `- Account balance: ${formatCurrency(data.balance)}\n`;
+    desc += `- Account balance: ${formatCurrencyForTTS(data.balance)}\n`;
   }
 
   if (data.recentTransactions && Array.isArray(data.recentTransactions)) {
@@ -60,7 +60,7 @@ function serializeDashboardContext(data: Record<string, any>): string {
     if (data.recentTransactions.length > 0) {
       desc += '  Recent activity:\n';
       data.recentTransactions.slice(0, 3).forEach((txn: any) => {
-        desc += `  • ${txn.name}: ${formatCurrency(txn.amount)}\n`;
+        desc += `  • ${txn.name}: ${formatCurrencyForTTS(txn.amount)}\n`;
       });
     }
   }
@@ -114,14 +114,14 @@ function serializeUPIPaymentContext(formState: Record<string, any>): string {
 }
 
 function serializeUPIConfirmContext(data: Record<string, any>): string {
-  let desc = 'Payment Confirmation:\n';
+  let desc = 'UPI Payment Confirmation:\n';
 
   if (data.upiId) {
     desc += `- Recipient UPI ID: ${data.upiId}\n`;
   }
 
   if (data.amount !== undefined) {
-    desc += `- Amount to send: ${formatCurrency(data.amount)}\n`;
+    desc += `- Amount to send: ${formatCurrencyForTTS(data.amount)}\n`;
   }
 
   if (data.recipientName) {
@@ -129,21 +129,21 @@ function serializeUPIConfirmContext(data: Record<string, any>): string {
   }
 
   if (data.isNewRecipient) {
-    desc += '- ⚠️ This is a first-time recipient\n';
+    desc += '- Warning: This is a first-time recipient\n';
   }
 
   return desc;
 }
 
 function serializeUPISuccessContext(data: Record<string, any>): string {
-  let desc = 'Payment Successful:\n';
+  let desc = 'UPI Payment Successful:\n';
 
   if (data.transactionId) {
     desc += `- Transaction ID: ${data.transactionId}\n`;
   }
 
   if (data.amount !== undefined) {
-    desc += `- Amount sent: ${formatCurrency(data.amount)}\n`;
+    desc += `- Amount sent: ${formatCurrencyForTTS(data.amount)}\n`;
   }
 
   if (data.recipientName) {
@@ -217,9 +217,11 @@ export const createSystemPrompt = (
   const guidedDescription = guidedContext ? serializeGuidedModeContext(guidedContext) : '';
 
   // Base prompt for free conversation mode
-  let basePrompt = `You are Soprano, a friendly and helpful AI banking assistant integrated into a mobile banking app.
+  let basePrompt = `You are Soprano, a friendly and helpful AI voice assistant for an Indian digital banking app.
 
-Your role is to help users with their banking tasks, answer questions, and provide guidance based on what they're currently viewing.
+Your role is to help users with their banking tasks using Indian payment systems (UPI, NEFT, IMPS), answer questions, and provide guidance based on what they're currently viewing.
+
+IMPORTANT: This is a VOICE interface. Always say "rupees" for currency amounts, never use symbols like ₹ or Rs.
 
 CURRENT CONTEXT:
 ${contextDescription}`;
@@ -256,8 +258,9 @@ SPECIAL CASES:
 - If response is unclear: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
 
 VALUE EXTRACTION RULES:
-- For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi"
-- For amounts: Convert "five hundred" → "500", "two thousand five hundred" → "2500", "fifteen thousand rupees" → "15000"
+- For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi", "priya at phonepe" → "priya@phonepe"
+- For amounts: Convert "five hundred rupees" → "500", "two thousand five hundred" → "2500", "fifteen thousand" → "15000"
+  - Also handle: "one lakh" → "100000", "two lakh fifty thousand" → "250000"
 - For text: Extract as-is
 
 CRITICAL RULES:
@@ -279,9 +282,9 @@ GUIDELINES:
 - If you don't have enough context, ask clarifying questions
 
 Example good responses:
-- "I see you're on the dashboard. Your current balance is ₹45,230. Would you like to review recent transactions or make a payment?"
-- "You're filling out a UPI payment form. I notice the amount field is empty - what amount would you like to send?"
-- "Looks like there's an error with the UPI ID format. It should look like username@bankname, for example: ramesh@oksbi"`;
+- "I see you're on the dashboard. Your current balance is 45,230 rupees. Would you like to review recent transactions or make a UPI payment?"
+- "You're filling out a UPI payment form. I notice the amount field is empty - how many rupees would you like to send?"
+- "Looks like there's an error with the UPI ID format. It should look like username at bank name, for example: ramesh at oksbi or priya at phonepe"`;
 
     // Add navigation assistance if element registry is provided
     if (elementRegistry && elementRegistry.length > 0) {

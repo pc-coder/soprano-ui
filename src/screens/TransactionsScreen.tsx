@@ -163,11 +163,8 @@ const TransactionsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleViewableItemsChanged = useRef(({ viewableItems }: any) => {
     console.log('[Commentary] Viewable items changed, count:', viewableItems.length);
-    console.log('[Commentary] Commentary enabled (ref):', commentaryEnabledRef.current);
-    console.log('[Commentary] Is speaking (ref):', isSpeakingRef.current);
 
     if (!commentaryEnabledRef.current) {
-      console.log('[Commentary] Skipping - commentary disabled');
       return;
     }
 
