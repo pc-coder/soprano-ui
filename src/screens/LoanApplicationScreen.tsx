@@ -16,6 +16,8 @@ import { InputField } from '../components/InputField';
 import { Button } from '../components/Button';
 import { Soprano } from '../components/Soprano';
 import { GuidedModeIndicator } from '../components/GuidedModeIndicator';
+import { ScanDocumentButton } from '../components/ScanDocumentButton';
+import { DocumentData } from '../services/documentScanService';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -176,6 +178,32 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
+  const handleAddressDataExtracted = (data: DocumentData) => {
+    // Auto-fill address fields from scanned document
+    if (data.addressLine1) setAddressLine1(data.addressLine1);
+    if (data.addressLine2) setAddressLine2(data.addressLine2);
+    if (data.city) setCity(data.city);
+    if (data.state) setState(data.state);
+    if (data.pincode) setPincode(data.pincode);
+
+    // Clear address-related errors
+    setErrors((prev) => ({
+      ...prev,
+      addressLine1: undefined,
+      city: undefined,
+      state: undefined,
+      pincode: undefined,
+    }));
+  };
+
+  const handlePANDataExtracted = (data: DocumentData) => {
+    // Auto-fill PAN number from scanned document
+    if (data.panNumber) setPanNumber(data.panNumber);
+
+    // Clear PAN error
+    setErrors((prev) => ({ ...prev, panNumber: undefined }));
+  };
+
   const handleSubmit = () => {
     const isLoanAmountValid = validateLoanAmount();
     const isAddressValid = validateAddressLine1();
@@ -248,6 +276,11 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Address</Text>
+          <ScanDocumentButton
+            documentType="address"
+            onDataExtracted={handleAddressDataExtracted}
+          />
+          <View style={{ height: spacing.md }} />
           <InputField
             label="Address Line 1"
             value={addressLine1}
@@ -324,6 +357,11 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PAN Details</Text>
+          <ScanDocumentButton
+            documentType="pan"
+            onDataExtracted={handlePANDataExtracted}
+          />
+          <View style={{ height: spacing.md }} />
           <InputField
             label="PAN Number"
             value={panNumber}
