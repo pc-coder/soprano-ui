@@ -324,17 +324,17 @@ export const useVoicePipeline = () => {
   }, [guidedForm, formState, formRefs, formHandlers, fillField, speakResponse, startRecording]);
 
   /**
-   * Auto-submit form after all fields are filled
+   * Summarize details and ask user to click Continue button
    */
   const autoSubmitForm = useCallback(async () => {
-    console.log('[VoicePipeline] Auto-submitting form');
+    console.log('[VoicePipeline] All fields completed, summarizing');
 
     // Get the filled values from guided form
     const filledValues = guidedForm.getFilledValues();
     console.log('[VoicePipeline] Filled values from conversation history:', filledValues);
 
     // Generate summary message
-    let summary = "Perfect! ";
+    let summary = "Great! All details collected. ";
 
     // Format summary based on screen
     if (currentScreen === 'UPIPayment') {
@@ -342,60 +342,19 @@ export const useVoicePipeline = () => {
       const amount = filledValues.amount || '';
       const note = filledValues.note;
 
-      summary += `Processing payment of ${amount} rupees to ${upiId}`;
+      summary += `You're sending ${amount} rupees to ${upiId}`;
       if (note) {
         summary += ` with the note: ${note}`;
       }
-      summary += ".";
+      summary += ". Please click the Continue button to proceed with the payment.";
     }
 
     // Speak summary
     await speakResponse(summary);
 
-    // Stop guided mode
+    // Stop guided mode - user will click Continue button to proceed
     guidedForm.stopGuidedMode();
-
-    // Navigate directly using the values we collected
-    if (currentScreen === 'UPIPayment' && formHandlers.navigation) {
-      const upiIdValue = String(filledValues.upiId || '');
-      const amountValue = parseFloat(String(filledValues.amount || '0'));
-      const noteValue = String(filledValues.note || '');
-      const balanceValue = formHandlers.balance || 50000;
-
-      console.log('[VoicePipeline] Validating values before navigation:');
-      console.log('  upiId:', upiIdValue);
-      console.log('  amount:', amountValue);
-      console.log('  note:', noteValue);
-
-      // Validate before navigating
-      const { validateUPIId, validateAmount } = require('../utils/validation');
-      const { findPayeeByUPI, isNewPayee } = require('../data/mockPayees');
-
-      const upiValidation = validateUPIId(upiIdValue);
-      const amountValidation = validateAmount(amountValue, balanceValue);
-
-      if (upiValidation.valid && amountValidation.valid) {
-        const payee = findPayeeByUPI(upiIdValue);
-        const recipientName = payee?.name || upiIdValue.split('@')[0];
-        const isNewRecipient = isNewPayee(upiIdValue);
-
-        console.log('[VoicePipeline] Validation passed, navigating to UPIConfirm');
-        formHandlers.navigation.navigate('UPIConfirm', {
-          upiId: upiIdValue,
-          amount: amountValue,
-          note: noteValue || undefined,
-          recipientName,
-          isNewRecipient,
-        });
-      } else {
-        console.error('[VoicePipeline] Validation failed:', {
-          upiError: upiValidation.error,
-          amountError: amountValidation.error,
-        });
-        await speakResponse("Sorry, there was an error validating the payment details. Please try again.");
-      }
-    }
-  }, [guidedForm, currentScreen, speakResponse, formHandlers]);
+  }, [guidedForm, currentScreen, speakResponse]);
 
   /**
    * Handle user's confirmation response
