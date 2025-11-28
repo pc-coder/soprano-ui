@@ -128,7 +128,6 @@ export const useVoicePipeline = () => {
             await speakResponse("I didn't catch that. Could you please repeat?");
             await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
-            setStatus('idle');
             return;
           }
         }
@@ -194,8 +193,6 @@ export const useVoicePipeline = () => {
             await speakResponse("Sorry, I had trouble processing that. Let's try again. " + currentField.prompt);
             await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
-            setStatus('idle');
-            setIsRecording(false);
             return;
           } catch (recoveryError) {
             console.error('[VoicePipeline] Recovery also failed:', recoveryError);
