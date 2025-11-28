@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { useVoice } from '../context/VoiceContext';
 import { useScreenContext } from '../context/ScreenContext';
@@ -32,6 +32,34 @@ export const useVoicePipeline = () => {
   const visualGuide = useVisualGuide();
   const { fillField } = useFormController();
   const recordingRef = useRef<Audio.Recording | null>(null);
+  const prevGuidedModeRef = useRef(guidedForm.isGuidedMode);
+
+  /**
+   * Cancel recording when guided mode stops
+   */
+  useEffect(() => {
+    const wasGuidedMode = prevGuidedModeRef.current;
+    const isGuidedMode = guidedForm.isGuidedMode;
+
+    // If guided mode just stopped, cancel any ongoing recording
+    if (wasGuidedMode && !isGuidedMode) {
+      console.log('[VoicePipeline] Guided mode stopped - canceling any ongoing recording');
+
+      // Cancel recording
+      if (recordingRef.current) {
+        recordingRef.current.stopAndUnloadAsync().catch((e) => {
+          console.log('[VoicePipeline] Error stopping recording on guided mode exit:', e);
+        });
+        recordingRef.current = null;
+      }
+
+      // Reset voice context
+      reset();
+    }
+
+    // Update previous state
+    prevGuidedModeRef.current = isGuidedMode;
+  }, [guidedForm.isGuidedMode, reset]);
 
   /**
    * Start audio recording
