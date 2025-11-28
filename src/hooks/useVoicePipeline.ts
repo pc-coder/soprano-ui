@@ -37,6 +37,20 @@ export const useVoicePipeline = () => {
   const startRecording = useCallback(async () => {
     console.log('[VoicePipeline] ===== START RECORDING CALLED =====');
     try {
+      // Clean up any existing recording first
+      if (recordingRef.current) {
+        console.log('[VoicePipeline] Found existing recording, cleaning up...');
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+        } catch (e) {
+          console.log('[VoicePipeline] Error stopping previous recording (might already be stopped):', e);
+        }
+        recordingRef.current = null;
+        console.log('[VoicePipeline] Previous recording cleaned up');
+        // Small delay to ensure cleanup is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
       console.log('[VoicePipeline] Requesting microphone permissions...');
       // Request permissions
       const permission = await Audio.requestPermissionsAsync();
@@ -83,9 +97,12 @@ export const useVoicePipeline = () => {
       }
 
       // Stop recording
+      console.log('[VoicePipeline] Stopping and unloading recording...');
       await recordingRef.current.stopAndUnloadAsync();
       const audioUri = recordingRef.current.getURI();
+      console.log('[VoicePipeline] Recording URI retrieved:', audioUri);
       recordingRef.current = null;
+      console.log('[VoicePipeline] Recording reference cleared');
 
       setIsRecording(false);
 
@@ -192,6 +209,9 @@ export const useVoicePipeline = () => {
           const nextField = guidedForm.getCurrentField();
           if (nextField) {
             await speakResponse(nextField.prompt);
+            // Extra delay to ensure audio playback is complete and recording is ready
+            console.log('[VoicePipeline] Waiting 200ms before starting next recording...');
+            await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
           }
         } else {
@@ -211,10 +231,13 @@ export const useVoicePipeline = () => {
           const nextField = guidedForm.getCurrentField();
           if (nextField) {
             await speakResponse(nextField.prompt);
+            // Extra delay before starting recording
+            await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
           }
         } else {
           await speakResponse("I'm sorry, but this field is required. " + currentField.prompt);
+          await new Promise(resolve => setTimeout(resolve, 200));
           await startRecording();
         }
         break;
@@ -229,6 +252,8 @@ export const useVoicePipeline = () => {
         const prevField = guidedForm.getCurrentField();
         if (prevField) {
           await speakResponse(prevField.prompt);
+          // Extra delay before starting recording
+          await new Promise(resolve => setTimeout(resolve, 200));
           await startRecording();
         }
         break;
@@ -243,6 +268,7 @@ export const useVoicePipeline = () => {
       case 'clarify': {
         // Ask again with clarification message
         await speakResponse(parsed.message);
+        await new Promise(resolve => setTimeout(resolve, 200));
         await startRecording();
         break;
       }
@@ -338,6 +364,8 @@ export const useVoicePipeline = () => {
       console.log('[VoicePipeline] First field prompt spoken successfully');
 
       // After speaking, automatically start listening
+      console.log('[VoicePipeline] Waiting 200ms before starting recording...');
+      await new Promise(resolve => setTimeout(resolve, 200));
       console.log('[VoicePipeline] Auto-starting recording after prompt');
       await startRecording();
       console.log('[VoicePipeline] Recording started successfully');
