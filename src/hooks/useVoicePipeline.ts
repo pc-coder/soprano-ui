@@ -240,8 +240,14 @@ export const useVoicePipeline = () => {
         await speakResponse(llmResponse);
       }
 
-      // Done
-      setStatus('idle');
+      // Done - only set to idle if we haven't started a new recording
+      // (in guided mode, we may have already started listening for the next field)
+      if (!recordingRef.current) {
+        console.log('[VoicePipeline] Processing complete, setting status to idle');
+        setStatus('idle');
+      } else {
+        console.log('[VoicePipeline] Processing complete but already recording next field, keeping status as is');
+      }
 
       // Cleanup old audio files
       cleanupAudioFiles().catch(console.error);
