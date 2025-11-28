@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Audio } from 'expo-av';
-import * as FileSystem from 'expo-file-system';
-import { EncodingType } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
+import { EncodingType } from 'expo-file-system/legacy';
 import { API_CONFIG } from '../config/api';
 import { createSystemPrompt } from '../utils/contextSerializer';
 
@@ -10,22 +10,47 @@ import { createSystemPrompt } from '../utils/contextSerializer';
  */
 export const transcribeAudio = async (audioUri: string): Promise<string> => {
   try {
-    console.log('[VoiceService] Transcribing audio with Deepgram...');
+    console.log('[VoiceService] === TRANSCRIPTION DEBUG START ===');
     console.log('[VoiceService] Audio URI:', audioUri);
+    console.log('[VoiceService] FileSystem available:', !!FileSystem);
+    console.log('[VoiceService] EncodingType available:', !!EncodingType);
+    console.log('[VoiceService] EncodingType.Base64:', EncodingType?.Base64);
+
+    // Check if file exists
+    console.log('[VoiceService] Checking if file exists...');
+    const fileInfo = await FileSystem.getInfoAsync(audioUri);
+    console.log('[VoiceService] File info:', JSON.stringify(fileInfo, null, 2));
+
+    if (!fileInfo.exists) {
+      throw new Error('Audio file does not exist');
+    }
+
+    console.log('[VoiceService] File size:', fileInfo.size, 'bytes');
 
     // Read audio file as base64
+    console.log('[VoiceService] Reading file as base64...');
     const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
       encoding: EncodingType.Base64,
     });
+    console.log('[VoiceService] Base64 length:', audioBase64.length);
+    console.log('[VoiceService] Base64 preview:', audioBase64.substring(0, 50));
 
     // Convert base64 to Uint8Array
+    console.log('[VoiceService] Converting to Uint8Array...');
     const binaryString = atob(audioBase64);
+    console.log('[VoiceService] Binary string length:', binaryString.length);
+
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
+    console.log('[VoiceService] Uint8Array created, length:', bytes.length);
 
     // Call Deepgram API
+    console.log('[VoiceService] Calling Deepgram API...');
+    console.log('[VoiceService] API Key present:', !!API_CONFIG.deepgram.apiKey);
+    console.log('[VoiceService] API Key length:', API_CONFIG.deepgram.apiKey?.length);
+
     const deepgramResponse = await fetch(
       `${API_CONFIG.deepgram.baseUrl}/listen?model=nova-2&smart_format=true`,
       {
@@ -38,12 +63,17 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       }
     );
 
+    console.log('[VoiceService] Deepgram response status:', deepgramResponse.status);
+
     if (!deepgramResponse.ok) {
       const error = await deepgramResponse.text();
+      console.error('[VoiceService] Deepgram API error response:', error);
       throw new Error(`Deepgram API error: ${error}`);
     }
 
     const data = await deepgramResponse.json();
+    console.log('[VoiceService] Deepgram response data:', JSON.stringify(data, null, 2));
+
     const transcript = data.results?.channels[0]?.alternatives[0]?.transcript;
 
     if (!transcript) {
@@ -51,9 +81,14 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
     }
 
     console.log('[VoiceService] Transcription:', transcript);
+    console.log('[VoiceService] === TRANSCRIPTION DEBUG END ===');
     return transcript;
   } catch (error: any) {
-    console.error('[VoiceService] Transcription error:', error);
+    console.error('[VoiceService] === TRANSCRIPTION ERROR ===');
+    console.error('[VoiceService] Error name:', error.name);
+    console.error('[VoiceService] Error message:', error.message);
+    console.error('[VoiceService] Error stack:', error.stack);
+    console.error('[VoiceService] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw new Error(`Failed to transcribe audio: ${error.message}`);
   }
 };

@@ -8,7 +8,7 @@ export const API_CONFIG = {
   },
   anthropic: {
     apiKey: Constants.expoConfig?.extra?.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-5',
     maxTokens: 1024,
   },
   elevenlabs: {
