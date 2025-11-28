@@ -92,6 +92,7 @@ export const Soprano: React.FC = () => {
 
     console.log('[Soprano] Starting guided mode with', fieldDefinitions.length, 'fields');
     console.log('[Soprano] Form refs available:', Object.keys(formRefs).length);
+    console.log('[Soprano] First field:', fieldDefinitions[0].name, '-', fieldDefinitions[0].label);
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     guidedForm.startGuidedMode(fieldDefinitions, formRefs);
@@ -99,8 +100,8 @@ export const Soprano: React.FC = () => {
     console.log('[Soprano] Guided mode started, now calling startGuidedConversation...');
 
     try {
-      // AI speaks first, then starts listening
-      await startGuidedConversation();
+      // AI speaks first, then starts listening - pass field data directly to avoid state race condition
+      await startGuidedConversation(fieldDefinitions[0], fieldDefinitions.length);
       console.log('[Soprano] startGuidedConversation completed successfully');
     } catch (error: any) {
       console.error('[Soprano] Error in startGuidedConversation:', error.message);

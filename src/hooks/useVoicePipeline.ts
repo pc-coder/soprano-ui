@@ -305,32 +305,22 @@ export const useVoicePipeline = () => {
 
   /**
    * Start guided mode conversation - AI speaks first then listens
+   * @param firstField - The first field definition to ask about
+   * @param totalFields - Total number of fields in the form
    */
-  const startGuidedConversation = useCallback(async () => {
+  const startGuidedConversation = useCallback(async (firstField: any, totalFields: number) => {
     console.log('[VoicePipeline] ===== START GUIDED CONVERSATION =====');
-    console.log('[VoicePipeline] isGuidedMode:', guidedForm.isGuidedMode);
-    console.log('[VoicePipeline] currentFieldIndex:', guidedForm.currentFieldIndex);
-    console.log('[VoicePipeline] fieldDefinitions length:', guidedForm.fieldDefinitions.length);
+    console.log('[VoicePipeline] First field passed:', firstField ? `${firstField.name} - ${firstField.label}` : 'NULL');
+    console.log('[VoicePipeline] Total fields:', totalFields);
 
     try {
-      console.log('[VoicePipeline] Waiting 100ms for state update...');
-      // Small delay to ensure state has updated
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      console.log('[VoicePipeline] Getting current field...');
-      const currentField = guidedForm.getCurrentField();
-      console.log('[VoicePipeline] Current field:', currentField ? `${currentField.name} - ${currentField.label}` : 'NULL');
-
-      if (!currentField) {
-        console.warn('[VoicePipeline] No current field for guided mode - ABORTING');
+      if (!firstField) {
+        console.error('[VoicePipeline] No first field provided - ABORTING');
         return;
       }
 
-      const progress = guidedForm.getProgress();
-      console.log('[VoicePipeline] Progress:', progress);
-
       // Give a summary and introduction
-      const summary = `I'll help you fill out this form. We have ${progress.total} fields to complete. Let's start.`;
+      const summary = `I'll help you fill out this form. We have ${totalFields} fields to complete. Let's start.`;
       console.log('[VoicePipeline] Summary message:', summary);
 
       console.log('[VoicePipeline] Calling speakResponse for summary...');
@@ -343,8 +333,8 @@ export const useVoicePipeline = () => {
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Ask for the first field
-      console.log('[VoicePipeline] Speaking first field prompt:', currentField.prompt);
-      await speakResponse(currentField.prompt);
+      console.log('[VoicePipeline] Speaking first field prompt:', firstField.prompt);
+      await speakResponse(firstField.prompt);
       console.log('[VoicePipeline] First field prompt spoken successfully');
 
       // After speaking, automatically start listening
@@ -362,7 +352,7 @@ export const useVoicePipeline = () => {
       setError(error.message);
       setStatus('error');
     }
-  }, [guidedForm, speakResponse, startRecording, setError, setStatus]);
+  }, [speakResponse, startRecording, setError, setStatus]);
 
   return {
     handleMicPress,
