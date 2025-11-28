@@ -17,7 +17,7 @@ import { getFormFieldsForScreen, hasGuidedFormSupport } from '../config/formFiel
 
 export const Soprano: React.FC = () => {
   const { status } = useVoice();
-  const { handleMicPress } = useVoicePipeline();
+  const { handleMicPress, startGuidedConversation } = useVoicePipeline();
   const guidedForm = useGuidedForm();
   const { currentScreen, formRefs } = useScreenContext();
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -60,7 +60,7 @@ export const Soprano: React.FC = () => {
     }
   }, [status, rotateAnim]);
 
-  const handleLongPress = () => {
+  const handleLongPress = async () => {
     // Check if current screen supports guided mode
     if (!hasGuidedFormSupport(currentScreen)) {
       console.log('[Soprano] Screen does not support guided mode:', currentScreen);
@@ -85,8 +85,8 @@ export const Soprano: React.FC = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     guidedForm.startGuidedMode(fieldDefinitions, formRefs);
 
-    // Start recording immediately
-    handleMicPress();
+    // AI speaks first, then starts listening
+    await startGuidedConversation();
   };
 
   const getButtonColor = () => {

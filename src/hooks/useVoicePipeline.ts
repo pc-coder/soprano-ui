@@ -177,6 +177,13 @@ export const useVoicePipeline = () => {
         // Move to next field
         if (!guidedForm.isLastField()) {
           guidedForm.moveToNextField();
+
+          // Ask for the next field and start listening
+          const nextField = guidedForm.getCurrentField();
+          if (nextField) {
+            await speakResponse(nextField.prompt);
+            await startRecording();
+          }
         } else {
           // All fields completed
           guidedForm.stopGuidedMode();
@@ -188,8 +195,16 @@ export const useVoicePipeline = () => {
         if (!currentField.required) {
           guidedForm.skipCurrentField();
           await speakResponse(parsed.message);
+
+          // Ask for next field after skipping
+          const nextField = guidedForm.getCurrentField();
+          if (nextField) {
+            await speakResponse(nextField.prompt);
+            await startRecording();
+          }
         } else {
           await speakResponse("I'm sorry, but this field is required. " + currentField.prompt);
+          await startRecording();
         }
         break;
       }
@@ -197,6 +212,13 @@ export const useVoicePipeline = () => {
       case 'go_back': {
         guidedForm.moveToPreviousField();
         await speakResponse(parsed.message);
+
+        // Ask for the previous field
+        const prevField = guidedForm.getCurrentField();
+        if (prevField) {
+          await speakResponse(prevField.prompt);
+          await startRecording();
+        }
         break;
       }
 
@@ -207,12 +229,13 @@ export const useVoicePipeline = () => {
       }
 
       case 'clarify': {
-        // Ask again
+        // Ask again with clarification message
         await speakResponse(parsed.message);
+        await startRecording();
         break;
       }
     }
-  }, [guidedForm, formState, formRefs, formHandlers, fillField]);
+  }, [guidedForm, formState, formRefs, formHandlers, fillField, speakResponse, startRecording]);
 
   /**
    * Synthesize and play response
@@ -262,9 +285,42 @@ export const useVoicePipeline = () => {
     }
   }, [status, startRecording, stopRecordingAndProcess, reset]);
 
+  /**
+   * Start guided mode conversation - AI speaks first then listens
+   */
+  const startGuidedConversation = useCallback(async () => {
+    try {
+      const currentField = guidedForm.getCurrentField();
+      if (!currentField) {
+        console.warn('[VoicePipeline] No current field for guided mode');
+        return;
+      }
+
+      const isFirstField = guidedForm.currentFieldIndex === 0;
+      const prompt = isFirstField
+        ? `I'll help you fill this form. ${currentField.prompt}`
+        : currentField.prompt;
+
+      console.log('[VoicePipeline] Speaking initial prompt:', prompt);
+
+      // Speak the prompt
+      await speakResponse(prompt);
+
+      // After speaking, automatically start listening
+      console.log('[VoicePipeline] Auto-starting recording after prompt');
+      await startRecording();
+
+    } catch (error: any) {
+      console.error('[VoicePipeline] Error starting guided conversation:', error.message);
+      setError(error.message);
+      setStatus('error');
+    }
+  }, [guidedForm, speakResponse, startRecording, setError, setStatus]);
+
   return {
     handleMicPress,
     cancelRecording,
+    startGuidedConversation,
     status,
   };
 };
