@@ -10,15 +10,19 @@ import { createSystemPrompt } from '../utils/contextSerializer';
 export const transcribeAudio = async (audioUri: string): Promise<string> => {
   try {
     console.log('[VoiceService] Transcribing audio with Deepgram...');
+    console.log('[VoiceService] Audio URI:', audioUri);
 
     // Read audio file as base64
     const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
       encoding: FileSystem.EncodingType.Base64,
     });
 
-    // Convert base64 to blob for fetch
-    const response = await fetch(audioUri);
-    const blob = await response.blob();
+    // Convert base64 to Uint8Array
+    const binaryString = atob(audioBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
 
     // Call Deepgram API
     const deepgramResponse = await fetch(
@@ -29,7 +33,7 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
           'Authorization': `Token ${API_CONFIG.deepgram.apiKey}`,
           'Content-Type': 'audio/m4a',
         },
-        body: blob,
+        body: bytes,
       }
     );
 
