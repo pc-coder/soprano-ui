@@ -82,7 +82,8 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
 export const getLLMResponse = async (
   transcript: string,
   contextData: { currentScreen: string; screenData: Record<string, any>; formState: Record<string, any> },
-  guidedContext?: GuidedContextData
+  guidedContext?: GuidedContextData,
+  elementRegistry?: Array<{ id: string; description: string }>
 ): Promise<string> => {
   const startTime = performance.now();
 
@@ -91,7 +92,7 @@ export const getLLMResponse = async (
       apiKey: API_CONFIG.anthropic.apiKey,
     });
 
-    const systemPrompt = createSystemPrompt(contextData, guidedContext);
+    const systemPrompt = createSystemPrompt(contextData, guidedContext, elementRegistry);
 
     const message = await anthropic.messages.create({
       model: API_CONFIG.anthropic.model,

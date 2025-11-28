@@ -210,7 +210,8 @@ function serializeGuidedModeContext(guided: GuidedModeContext): string {
  */
 export const createSystemPrompt = (
   context: ScreenContextData,
-  guidedContext?: GuidedModeContext
+  guidedContext?: GuidedModeContext,
+  elementRegistry?: Array<{ id: string; description: string }>
 ): string => {
   const contextDescription = serializeContextForLLM(context);
   const guidedDescription = guidedContext ? serializeGuidedModeContext(guidedContext) : '';
@@ -281,6 +282,29 @@ Example good responses:
 - "I see you're on the dashboard. Your current balance is ₹45,230. Would you like to review recent transactions or make a payment?"
 - "You're filling out a UPI payment form. I notice the amount field is empty - what amount would you like to send?"
 - "Looks like there's an error with the UPI ID format. It should look like username@bankname, for example: ramesh@oksbi"`;
+
+    // Add navigation assistance if element registry is provided
+    if (elementRegistry && elementRegistry.length > 0) {
+      basePrompt += `
+
+VISUAL NAVIGATION ASSISTANCE:
+If the user asks "how to", "where is", "how do I", or navigation questions, you can guide them visually.
+
+Available interactive elements on this screen:
+${elementRegistry.map(e => `- ${e.id}: ${e.description}`).join('\n')}
+
+When user asks navigation questions, respond with JSON in this format:
+{
+  "type": "navigation_guide",
+  "element_id": "history-button",
+  "instruction": "Tap the History button to view all your transactions"
+}
+
+The system will highlight the element and speak your instruction.
+
+ONLY use navigation_guide when user explicitly asks how to do something or where something is.
+For general conversation, respond normally without JSON.`;
+    }
   }
 
   return basePrompt;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useApp } from '../context/AppContext';
 import { useScreenContext } from '../context/ScreenContext';
+import { useVisualGuide } from '../context/VisualGuideContext';
 import { BalanceCard } from '../components/BalanceCard';
 import { QuickActions } from '../components/QuickActions';
 import { TransactionList } from '../components/TransactionList';
@@ -23,6 +24,7 @@ import { spacing } from '../theme/spacing';
 import { getMonthlySpending, getMonthlyIncome } from '../data/mockTransactions';
 import { formatCurrency } from '../utils/formatters';
 import { Ionicons } from '@expo/vector-icons';
+import { getElementsForScreen } from '../config/elementRegistry';
 
 type DashboardScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -33,7 +35,16 @@ interface Props {
 const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { user, transactions, refreshData } = useApp();
   const { setCurrentScreen, updateScreenData } = useScreenContext();
+  const { registerElement, clearRegistry } = useVisualGuide();
   const [refreshing, setRefreshing] = useState(false);
+
+  // Create refs for all interactive elements
+  const payButtonRef = useRef<View>(null);
+  const scanButtonRef = useRef<View>(null);
+  const historyButtonRef = useRef<View>(null);
+  const moreButtonRef = useRef<View>(null);
+  const balanceCardRef = useRef<View>(null);
+  const transactionsListRef = useRef<View>(null);
 
   useEffect(() => {
     setCurrentScreen('Dashboard');
@@ -41,6 +52,32 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       balance: user.accounts[0]?.balance,
       recentTransactions: transactions.slice(0, 5),
     });
+
+    // Register elements for visual guidance
+    const elements = getElementsForScreen('Dashboard');
+    const refs: Record<string, React.RefObject<View>> = {
+      'pay-button': payButtonRef,
+      'scan-button': scanButtonRef,
+      'history-button': historyButtonRef,
+      'more-button': moreButtonRef,
+      'balance-card': balanceCardRef,
+      'transactions-list': transactionsListRef,
+    };
+
+    elements.forEach(element => {
+      if (refs[element.id]) {
+        registerElement({
+          ...element,
+          ref: refs[element.id],
+          screenName: 'Dashboard',
+        });
+      }
+    });
+
+    // Cleanup on unmount
+    return () => {
+      clearRegistry();
+    };
   }, []);
 
   const getGreeting = () => {
@@ -62,26 +99,37 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   const quickActions = [
     {
+      id: 'pay-button',
       icon: 'bank-transfer' as const,
       label: 'Pay',
       onPress: () => navigation.navigate('UPIPayment'),
     },
     {
+      id: 'scan-button',
       icon: 'qrcode-scan' as const,
       label: 'Scan',
       onPress: () => {},
     },
     {
+      id: 'history-button',
       icon: 'history' as const,
       label: 'History',
       onPress: () => navigation.navigate('Transactions'),
     },
     {
+      id: 'more-button',
       icon: 'dots-horizontal' as const,
       label: 'More',
       onPress: () => {},
     },
   ];
+
+  const elementRefs = {
+    'pay-button': payButtonRef,
+    'scan-button': scanButtonRef,
+    'history-button': historyButtonRef,
+    'more-button': moreButtonRef,
+  };
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -103,9 +151,11 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <BalanceCard account={user.accounts[0]} />
+        <View ref={balanceCardRef} collapsable={false}>
+          <BalanceCard account={user.accounts[0]} />
+        </View>
 
-        <QuickActions actions={quickActions} />
+        <QuickActions actions={quickActions} elementRefs={elementRefs} />
 
         <Card style={styles.spendingCard}>
           <View style={styles.spendingHeader}>
@@ -136,12 +186,14 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </Card>
 
-        <TransactionList
-          transactions={recentTransactions}
-          title="Recent Transactions"
-          showSeeAll
-          onSeeAllPress={() => navigation.navigate('Transactions')}
-        />
+        <View ref={transactionsListRef} collapsable={false}>
+          <TransactionList
+            transactions={recentTransactions}
+            title="Recent Transactions"
+            showSeeAll
+            onSeeAllPress={() => navigation.navigate('Transactions')}
+          />
+        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>

@@ -5,8 +5,10 @@ import { AppProvider } from './src/context/AppContext';
 import { ScreenContextProvider } from './src/context/ScreenContext';
 import { VoiceProvider } from './src/context/VoiceContext';
 import { GuidedFormProvider } from './src/context/GuidedFormContext';
+import { VisualGuideProvider } from './src/context/VisualGuideContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ContextDebugOverlay } from './src/components/ContextDebugOverlay';
+import { VisualGuideOverlay } from './src/components/VisualGuideOverlay';
 
 export default function App() {
   return (
@@ -14,9 +16,12 @@ export default function App() {
       <ScreenContextProvider>
         <VoiceProvider>
           <GuidedFormProvider>
-            <StatusBar barStyle="light-content" />
-            <AppNavigator />
-            <ContextDebugOverlay />
+            <VisualGuideProvider>
+              <StatusBar barStyle="light-content" />
+              <AppNavigator />
+              <ContextDebugOverlay />
+              <VisualGuideOverlay />
+            </VisualGuideProvider>
           </GuidedFormProvider>
         </VoiceProvider>
       </ScreenContextProvider>

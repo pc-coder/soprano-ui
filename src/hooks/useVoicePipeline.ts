@@ -3,6 +3,7 @@ import { Audio } from 'expo-av';
 import { useVoice } from '../context/VoiceContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { useGuidedForm } from '../context/GuidedFormContext';
+import { useVisualGuide } from '../context/VisualGuideContext';
 import { useFormController } from './useFormController';
 import { RECORDING_OPTIONS } from '../config/api';
 import {
@@ -28,6 +29,7 @@ export const useVoicePipeline = () => {
 
   const { currentScreen, screenData, formState, formRefs, formHandlers } = useScreenContext();
   const guidedForm = useGuidedForm();
+  const visualGuide = useVisualGuide();
   const { fillField } = useFormController();
   const recordingRef = useRef<Audio.Recording | null>(null);
 
@@ -154,12 +156,23 @@ export const useVoicePipeline = () => {
           }
         : undefined;
 
+      // Prepare element registry for navigation assistance
+      const elementRegistry = visualGuide.elementRegistry
+        .filter(e => e.screenName === currentScreen)
+        .map(e => ({ id: e.id, description: e.description }));
+
       // Step 2: Get LLM response from Anthropic with screen context and guided context
-      const llmResponse = await getLLMResponse(transcript, contextData, guidedContextData);
+      const llmResponse = await getLLMResponse(transcript, contextData, guidedContextData, elementRegistry);
       setResponse(llmResponse);
 
-      // Step 3: Handle guided mode vs free conversation mode
-      if (guidedForm.isGuidedMode) {
+      // Step 3: Check if response is a navigation guide
+      const navigationGuide = parseNavigationGuide(llmResponse);
+
+      if (navigationGuide) {
+        // Handle visual navigation guide
+        await handleNavigationGuide(navigationGuide);
+      } else if (guidedForm.isGuidedMode) {
+        // Handle guided mode
         if (guidedForm.isAwaitingConfirmation) {
           // Handle confirmation response
           await handleConfirmationResponse(llmResponse, transcript);
@@ -322,6 +335,46 @@ export const useVoicePipeline = () => {
       }
     }
   }, [guidedForm, formState, formRefs, formHandlers, fillField, speakResponse, startRecording]);
+
+  /**
+   * Parse navigation guide from LLM response
+   */
+  const parseNavigationGuide = (response: string): { element_id: string; instruction: string } | null => {
+    try {
+      // Try to extract JSON from response
+      let jsonStr = response.trim();
+
+      // Remove markdown code blocks if present
+      jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+
+      const parsed = JSON.parse(jsonStr);
+
+      if (parsed.type === 'navigation_guide' && parsed.element_id && parsed.instruction) {
+        return {
+          element_id: parsed.element_id,
+          instruction: parsed.instruction,
+        };
+      }
+
+      return null;
+    } catch (e) {
+      // Not a JSON response, return null
+      return null;
+    }
+  };
+
+  /**
+   * Handle navigation guide by highlighting element and speaking instruction
+   */
+  const handleNavigationGuide = useCallback(async (guide: { element_id: string; instruction: string }) => {
+    console.log('[VoicePipeline] Showing navigation guide for:', guide.element_id);
+
+    // Speak the instruction
+    await speakResponse(guide.instruction);
+
+    // Show visual guide
+    await visualGuide.showGuide(guide.element_id, guide.instruction);
+  }, [visualGuide, speakResponse]);
 
   /**
    * Summarize details and ask user to click Continue button
