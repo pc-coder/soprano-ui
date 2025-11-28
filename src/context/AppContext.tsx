@@ -8,6 +8,8 @@ interface AppContextType {
   transactions: Transaction[];
   balance: number;
   refreshData: () => void;
+  commentaryEnabled: boolean;
+  setCommentaryEnabled: (enabled: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -27,6 +29,7 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User>(mockUser);
   const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [commentaryEnabled, setCommentaryEnabled] = useState<boolean>(false);
 
   const balance = user.accounts[0]?.balance || 0;
 
@@ -41,6 +44,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     transactions,
     balance,
     refreshData,
+    commentaryEnabled,
+    setCommentaryEnabled,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

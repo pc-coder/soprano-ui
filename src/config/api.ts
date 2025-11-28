@@ -9,7 +9,9 @@ export const API_CONFIG = {
   anthropic: {
     apiKey: Constants.expoConfig?.extra?.ANTHROPIC_API_KEY || process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY || '',
     model: 'claude-sonnet-4-5',
+    commentaryModel: 'claude-haiku-4-5',
     maxTokens: 1024,
+    commentaryMaxTokens: 512,
   },
   elevenlabs: {
     apiKey: Constants.expoConfig?.extra?.ELEVENLABS_API_KEY || process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY || '',

@@ -131,6 +131,10 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
   const startTime = performance.now();
 
   try {
+    console.log('[VoiceService] Synthesizing text:', text.substring(0, 50) + '...');
+    console.log('[VoiceService] API Key present:', !!API_CONFIG.elevenlabs.apiKey);
+    console.log('[VoiceService] Voice ID:', API_CONFIG.elevenlabs.voiceId);
+
     const response = await fetch(
       `${API_CONFIG.elevenlabs.baseUrl}/text-to-speech/${API_CONFIG.elevenlabs.voiceId}`,
       {
@@ -153,8 +157,11 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
       }
     );
 
+    console.log('[VoiceService] TTS response status:', response.status);
+
     if (!response.ok) {
       const error = await response.text();
+      console.error('[VoiceService] TTS error response:', error);
       throw new Error(`ElevenLabs API error: ${error}`);
     }
 
@@ -195,23 +202,30 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
  */
 export const playAudio = async (audioUri: string): Promise<void> => {
   try {
+    console.log('[VoiceService] Creating audio from URI:', audioUri);
+
     const { sound } = await Audio.Sound.createAsync(
       { uri: audioUri },
       { shouldPlay: true }
     );
 
+    console.log('[VoiceService] Audio created, playing...');
+
     // Wait for playback to finish
     await new Promise<void>((resolve) => {
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded && status.didJustFinish) {
+          console.log('[VoiceService] Playback finished');
           resolve();
         }
       });
     });
 
     await sound.unloadAsync();
+    console.log('[VoiceService] Audio unloaded');
   } catch (error: any) {
     console.error('[VoiceService] Playback error:', error.message);
+    console.error('[VoiceService] Full playback error:', error);
     throw new Error(`Failed to play audio: ${error.message}`);
   }
 };
