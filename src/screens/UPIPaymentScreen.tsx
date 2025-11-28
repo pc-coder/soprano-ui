@@ -37,13 +37,14 @@ interface Props {
 
 const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
   const { user, balance } = useApp();
-  const { setCurrentScreen, updateFormState, updateScreenData, registerFormRefs, registerFormHandlers } = useScreenContext();
+  const { setCurrentScreen, updateFormState, updateScreenData, registerFormRefs, registerFormHandlers, registerScrollViewRef } = useScreenContext();
   const guidedForm = useGuidedForm();
 
   // SOPRANO: All inputs must expose refs for AI integration
   const upiIdRef = useRef<TextInput>(null);
   const amountRef = useRef<TextInput>(null);
   const noteRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [upiId, setUpiId] = useState('');
   const [amount, setAmount] = useState('');
@@ -81,6 +82,9 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
       amountRef,
       noteRef,
     });
+
+    // Register ScrollView ref for auto-scrolling
+    registerScrollViewRef(scrollViewRef);
 
     // Register form handlers for guided mode
     registerFormHandlers({
@@ -173,6 +177,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
     >
       <GuidedModeIndicator />
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.contentContainer,

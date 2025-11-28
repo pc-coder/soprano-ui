@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, ReactNode } from 'react';
-import { TextInput } from 'react-native';
+import { TextInput, ScrollView } from 'react-native';
 
 interface ScreenContextType {
   currentScreen: string;
@@ -7,11 +7,13 @@ interface ScreenContextType {
   formState: Record<string, any>;
   formRefs: Record<string, React.RefObject<TextInput>>;
   formHandlers: Record<string, any>;
+  scrollViewRef: React.RefObject<ScrollView> | null;
   updateScreenData: (data: Record<string, any>) => void;
   updateFormState: (data: Record<string, any>) => void;
   setCurrentScreen: (screen: string) => void;
   registerFormRefs: (refs: Record<string, React.RefObject<TextInput>>) => void;
   registerFormHandlers: (handlers: Record<string, any>) => void;
+  registerScrollViewRef: (ref: React.RefObject<ScrollView>) => void;
   clearFormData: () => void;
 }
 
@@ -36,6 +38,7 @@ export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ ch
   const [formState, setFormState] = useState<Record<string, any>>({});
   const [formRefs, setFormRefs] = useState<Record<string, React.RefObject<TextInput>>>({});
   const [formHandlers, setFormHandlers] = useState<Record<string, any>>({});
+  const [scrollViewRef, setScrollViewRef] = useState<React.RefObject<ScrollView> | null>(null);
 
   const setCurrentScreen = (screen: string) => {
     const timestamp = new Date().toISOString();
@@ -94,11 +97,17 @@ export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ ch
     setFormHandlers(handlers);
   };
 
+  const registerScrollViewRef = (ref: React.RefObject<ScrollView>) => {
+    console.log('[ScreenContext] Registering ScrollView ref');
+    setScrollViewRef(ref);
+  };
+
   const clearFormData = () => {
     console.log('[ScreenContext] Clearing form data');
     setFormState({});
     setFormRefs({});
     setFormHandlers({});
+    setScrollViewRef(null);
   };
 
   const value: ScreenContextType = {
@@ -107,11 +116,13 @@ export const ScreenContextProvider: React.FC<ScreenContextProviderProps> = ({ ch
     formState,
     formRefs,
     formHandlers,
+    scrollViewRef,
     updateScreenData,
     updateFormState,
     setCurrentScreen,
     registerFormRefs,
     registerFormHandlers,
+    registerScrollViewRef,
     clearFormData,
   };
 

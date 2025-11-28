@@ -11,6 +11,7 @@ import {
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { useScreenContext } from '../context/ScreenContext';
 
 interface InputFieldProps extends TextInputProps {
   label: string;
@@ -49,8 +50,10 @@ export const InputField: React.FC<InputFieldProps> = ({
   const [isFocused, setIsFocused] = React.useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
+  const containerRef = useRef<View>(null);
+  const { scrollViewRef } = useScreenContext();
 
-  // Pulse animation when field is active in guided mode
+  // Pulse animation and auto-scroll when field is active in guided mode
   useEffect(() => {
     if (isGuidedActive) {
       // Start pulse animation
@@ -75,6 +78,25 @@ export const InputField: React.FC<InputFieldProps> = ({
         duration: 300,
         useNativeDriver: false,
       }).start();
+
+      // Auto-scroll to field
+      if (containerRef.current && scrollViewRef?.current) {
+        setTimeout(() => {
+          containerRef.current?.measureLayout(
+            scrollViewRef.current as any,
+            (x, y) => {
+              console.log('[InputField] Scrolling to field at y:', y);
+              scrollViewRef.current?.scrollTo({
+                y: Math.max(0, y - 100), // Scroll with 100px offset from top
+                animated: true,
+              });
+            },
+            () => {
+              console.log('[InputField] Failed to measure field position');
+            }
+          );
+        }, 100); // Small delay to ensure layout is ready
+      }
     } else {
       pulseAnim.setValue(1);
       Animated.timing(glowAnim, {
@@ -83,7 +105,7 @@ export const InputField: React.FC<InputFieldProps> = ({
         useNativeDriver: false,
       }).start();
     }
-  }, [isGuidedActive, pulseAnim, glowAnim]);
+  }, [isGuidedActive, pulseAnim, glowAnim, scrollViewRef]);
 
   const handleFocus = () => {
     setIsFocused(true);
@@ -106,7 +128,10 @@ export const InputField: React.FC<InputFieldProps> = ({
   });
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ scale: pulseAnim }] }]}>
+    <Animated.View
+      ref={containerRef}
+      style={[styles.container, { transform: [{ scale: pulseAnim }] }]}
+    >
       {isGuidedActive && (
         <View style={styles.guidedBadge}>
           <Text style={styles.guidedBadgeText}>🎤 Listening</Text>

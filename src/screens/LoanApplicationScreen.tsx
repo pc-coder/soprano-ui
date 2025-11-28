@@ -30,13 +30,14 @@ interface Props {
 }
 
 const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
-  const { setCurrentScreen, updateFormState, registerFormRefs, registerFormHandlers } = useScreenContext();
+  const { setCurrentScreen, updateFormState, registerFormRefs, registerFormHandlers, registerScrollViewRef } = useScreenContext();
   const guidedForm = useGuidedForm();
 
   // Refs for all input fields
   const loanAmountRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
   const panNumberRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Form state
   const [loanAmount, setLoanAmount] = useState('');
@@ -71,6 +72,9 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
       addressRef,
       panNumberRef,
     });
+
+    // Register ScrollView ref for auto-scrolling
+    registerScrollViewRef(scrollViewRef);
 
     // Register form handlers for guided mode
     registerFormHandlers({
@@ -160,6 +164,7 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     >
       <GuidedModeIndicator />
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.contentContainer,

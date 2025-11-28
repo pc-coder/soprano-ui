@@ -225,6 +225,13 @@ export const playAudio = async (audioUri: string): Promise<void> => {
     // Stop any currently playing audio
     await stopAudio();
 
+    // Set audio mode for playback
+    console.log('[VoiceService] Setting audio mode for playback');
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    });
+
     console.log('[VoiceService] Creating audio from URI:', audioUri);
 
     const { sound } = await Audio.Sound.createAsync(
@@ -250,6 +257,13 @@ export const playAudio = async (audioUri: string): Promise<void> => {
     await sound.unloadAsync();
     currentSound = null;
     console.log('[VoiceService] Audio unloaded');
+
+    // Reset audio mode to allow recording after playback
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+    });
+    console.log('[VoiceService] Audio mode reset for recording');
   } catch (error: any) {
     console.error('[VoiceService] Playback error:', error.message);
     console.error('[VoiceService] Full playback error:', error);
