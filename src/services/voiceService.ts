@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
+import { EncodingType } from 'expo-file-system';
 import { API_CONFIG } from '../config/api';
 import { createSystemPrompt } from '../utils/contextSerializer';
 
@@ -14,7 +15,7 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
 
     // Read audio file as base64
     const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: EncodingType.Base64,
     });
 
     // Convert base64 to Uint8Array
@@ -146,7 +147,7 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
           const fileUri = `${FileSystem.cacheDirectory}soprano_response_${Date.now()}.mp3`;
 
           await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
-            encoding: FileSystem.EncodingType.Base64,
+            encoding: EncodingType.Base64,
           });
 
           console.log('[VoiceService] Audio saved to:', fileUri);
