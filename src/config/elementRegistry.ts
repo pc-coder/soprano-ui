@@ -17,10 +17,10 @@ export const SCREEN_ELEMENTS: Record<string, ElementDefinition[]> = {
       keywords: ['pay', 'send', 'money', 'transfer', 'payment', 'upi'],
     },
     {
-      id: 'scan-button',
-      label: 'Scan',
-      description: 'Scan QR code for payment',
-      keywords: ['scan', 'qr', 'code', 'camera'],
+      id: 'loan-button',
+      label: 'Apply for Loan',
+      description: 'Apply for a loan',
+      keywords: ['loan', 'apply', 'borrow', 'credit'],
     },
     {
       id: 'history-button',

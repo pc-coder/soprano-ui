@@ -40,7 +40,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   // Create refs for all interactive elements
   const payButtonRef = useRef<View>(null);
-  const scanButtonRef = useRef<View>(null);
+  const loanButtonRef = useRef<View>(null);
   const historyButtonRef = useRef<View>(null);
   const moreButtonRef = useRef<View>(null);
   const balanceCardRef = useRef<View>(null);
@@ -57,7 +57,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     const elements = getElementsForScreen('Dashboard');
     const refs: Record<string, React.RefObject<View>> = {
       'pay-button': payButtonRef,
-      'scan-button': scanButtonRef,
+      'loan-button': loanButtonRef,
       'history-button': historyButtonRef,
       'more-button': moreButtonRef,
       'balance-card': balanceCardRef,
@@ -105,10 +105,10 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       onPress: () => navigation.navigate('UPIPayment'),
     },
     {
-      id: 'scan-button',
-      icon: 'qrcode-scan' as const,
-      label: 'Scan',
-      onPress: () => {},
+      id: 'loan-button',
+      icon: 'cash' as const,
+      label: 'Apply for Loan',
+      onPress: () => navigation.navigate('LoanApplication'),
     },
     {
       id: 'history-button',
@@ -126,7 +126,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   const elementRefs = {
     'pay-button': payButtonRef,
-    'scan-button': scanButtonRef,
+    'loan-button': loanButtonRef,
     'history-button': historyButtonRef,
     'more-button': moreButtonRef,
   };

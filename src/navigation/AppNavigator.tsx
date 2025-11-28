@@ -8,6 +8,7 @@ import TransactionsScreen from '../screens/TransactionsScreen';
 import UPIPaymentScreen from '../screens/UPIPaymentScreen';
 import UPIConfirmScreen from '../screens/UPIConfirmScreen';
 import UPISuccessScreen from '../screens/UPISuccessScreen';
+import LoanApplicationScreen from '../screens/LoanApplicationScreen';
 
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -27,6 +28,7 @@ export type RootStackParamList = {
     transactionId: string;
     timestamp: string;
   };
+  LoanApplication: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -76,6 +78,11 @@ const AppNavigator = () => {
           name="UPISuccess"
           component={UPISuccessScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="LoanApplication"
+          component={LoanApplicationScreen}
+          options={{ title: 'Apply for Loan' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
