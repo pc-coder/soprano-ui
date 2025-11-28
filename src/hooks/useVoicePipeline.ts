@@ -11,6 +11,7 @@ import {
   getLLMResponse,
   synthesizeSpeech,
   playAudio,
+  stopAudio,
   cleanupAudioFiles,
   GuidedContextData,
 } from '../services/voiceService';
@@ -35,15 +36,20 @@ export const useVoicePipeline = () => {
   const prevGuidedModeRef = useRef(guidedForm.isGuidedMode);
 
   /**
-   * Cancel recording when guided mode stops
+   * Cancel recording and audio when guided mode stops
    */
   useEffect(() => {
     const wasGuidedMode = prevGuidedModeRef.current;
     const isGuidedMode = guidedForm.isGuidedMode;
 
-    // If guided mode just stopped, cancel any ongoing recording
+    // If guided mode just stopped, cancel any ongoing recording and audio
     if (wasGuidedMode && !isGuidedMode) {
-      console.log('[VoicePipeline] Guided mode stopped - canceling any ongoing recording');
+      console.log('[VoicePipeline] Guided mode stopped - canceling recording and audio');
+
+      // Stop any playing audio
+      stopAudio().catch((e) => {
+        console.log('[VoicePipeline] Error stopping audio on guided mode exit:', e);
+      });
 
       // Cancel recording
       if (recordingRef.current) {

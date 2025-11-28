@@ -197,17 +197,43 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
   }
 };
 
+// Keep track of current audio playback
+let currentSound: Audio.Sound | null = null;
+
+/**
+ * Stop current audio playback
+ */
+export const stopAudio = async (): Promise<void> => {
+  try {
+    if (currentSound) {
+      console.log('[VoiceService] Stopping current audio');
+      await currentSound.stopAsync();
+      await currentSound.unloadAsync();
+      currentSound = null;
+    }
+  } catch (error: any) {
+    console.error('[VoiceService] Error stopping audio:', error.message);
+    currentSound = null;
+  }
+};
+
 /**
  * Play audio file
  */
 export const playAudio = async (audioUri: string): Promise<void> => {
   try {
+    // Stop any currently playing audio
+    await stopAudio();
+
     console.log('[VoiceService] Creating audio from URI:', audioUri);
 
     const { sound } = await Audio.Sound.createAsync(
       { uri: audioUri },
       { shouldPlay: true }
     );
+
+    // Store reference to current sound
+    currentSound = sound;
 
     console.log('[VoiceService] Audio created, playing...');
 
@@ -222,10 +248,12 @@ export const playAudio = async (audioUri: string): Promise<void> => {
     });
 
     await sound.unloadAsync();
+    currentSound = null;
     console.log('[VoiceService] Audio unloaded');
   } catch (error: any) {
     console.error('[VoiceService] Playback error:', error.message);
     console.error('[VoiceService] Full playback error:', error);
+    currentSound = null;
     throw new Error(`Failed to play audio: ${error.message}`);
   }
 };
