@@ -31,8 +31,8 @@ export const SCREEN_ELEMENTS: Record<string, ElementDefinition[]> = {
     {
       id: 'more-button',
       label: 'More',
-      description: 'More options',
-      keywords: ['more', 'options', 'settings', 'menu'],
+      description: 'View profile and more options',
+      keywords: ['more', 'options', 'settings', 'menu', 'profile'],
     },
     {
       id: 'balance-card',
@@ -92,6 +92,8 @@ export const SCREEN_ELEMENTS: Record<string, ElementDefinition[]> = {
       keywords: ['confirm', 'complete', 'finish', 'pay'],
     },
   ],
+
+  Profile: [],
 };
 
 // Helper to get element definitions for a screen

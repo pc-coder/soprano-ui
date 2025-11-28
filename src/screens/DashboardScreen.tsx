@@ -113,7 +113,7 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       id: 'more-button',
       icon: 'dots-horizontal' as const,
       label: 'More',
-      onPress: () => {},
+      onPress: () => navigation.navigate('Profile'),
     },
   ];
 
