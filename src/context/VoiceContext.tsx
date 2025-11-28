@@ -42,11 +42,16 @@ const initialState: VoiceState = {
 };
 
 export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
-  const [status, setStatus] = useState<VoiceStatus>(initialState.status);
+  const [status, setStatusInternal] = useState<VoiceStatus>(initialState.status);
   const [isRecording, setIsRecording] = useState(initialState.isRecording);
   const [transcript, setTranscript] = useState<string | null>(initialState.transcript);
   const [response, setResponse] = useState<string | null>(initialState.response);
   const [error, setError] = useState<string | null>(initialState.error);
+
+  const setStatus = (newStatus: VoiceStatus) => {
+    console.log('[VoiceContext] Status changing from', status, 'to', newStatus);
+    setStatusInternal(newStatus);
+  };
 
   const reset = () => {
     setStatus(initialState.status);

@@ -23,6 +23,12 @@ export const Soprano: React.FC = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
+  // Debug logging
+  useEffect(() => {
+    console.log('[Soprano] Status changed to:', status);
+    console.log('[Soprano] Guided mode:', guidedForm.isGuidedMode);
+  }, [status, guidedForm.isGuidedMode]);
+
   // Pulsing animation for listening state
   useEffect(() => {
     if (status === 'listening') {
@@ -93,9 +99,21 @@ export const Soprano: React.FC = () => {
   };
 
   const getButtonColor = () => {
-    // Show different color when in guided mode
+    // In guided mode, show status-based colors
+    // but default to green when idle
     if (guidedForm.isGuidedMode) {
-      return colors.success; // Green for guided mode
+      switch (status) {
+        case 'listening':
+          return colors.error; // Red when recording
+        case 'processing':
+          return colors.warning; // Yellow when processing
+        case 'speaking':
+          return colors.success; // Green when speaking
+        case 'error':
+          return colors.error;
+        default:
+          return colors.success; // Green when idle in guided mode
+      }
     }
 
     switch (status) {
