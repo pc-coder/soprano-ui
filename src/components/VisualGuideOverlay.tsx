@@ -148,8 +148,8 @@ const styles = StyleSheet.create({
   highlightCircle: {
     position: 'absolute',
     borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#fff',
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 10,
