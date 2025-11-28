@@ -13,6 +13,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useApp } from '../context/AppContext';
 import { useScreenContext } from '../context/ScreenContext';
+import { useGuidedForm } from '../context/GuidedFormContext';
 import { InputField } from '../components/InputField';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -38,6 +39,7 @@ interface Props {
 const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
   const { user, balance } = useApp();
   const { setCurrentScreen, updateFormState, updateScreenData, registerFormRefs, registerFormHandlers } = useScreenContext();
+  const guidedForm = useGuidedForm();
 
   // SOPRANO: All inputs must expose refs for AI integration
   const upiIdRef = useRef<TextInput>(null);
@@ -155,6 +157,13 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
     !errors.upiId &&
     !errors.amount;
 
+  // Check if a field is currently active in guided mode
+  const isFieldGuidedActive = (fieldName: string): boolean => {
+    if (!guidedForm.isGuidedMode) return false;
+    const currentField = guidedForm.getCurrentField();
+    return currentField?.name === fieldName;
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -179,6 +188,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
             onFocus={() => setFocusedField('upiId')}
             onBlur={handleUpiIdBlur}
             inputRef={upiIdRef}
+            isGuidedActive={isFieldGuidedActive('upiId')}
           />
           <TouchableOpacity style={styles.scanButton} activeOpacity={0.7}>
             <MaterialCommunityIcons
@@ -203,6 +213,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
             onFocus={() => setFocusedField('amount')}
             onBlur={handleAmountBlur}
             inputRef={amountRef}
+            isGuidedActive={isFieldGuidedActive('amount')}
           />
         </View>
 
@@ -228,6 +239,7 @@ const UPIPaymentScreen: React.FC<Props> = ({ navigation }) => {
             onFocus={() => setFocusedField('note')}
             onBlur={() => setFocusedField(null)}
             inputRef={noteRef}
+            isGuidedActive={isFieldGuidedActive('note')}
           />
         </View>
 
