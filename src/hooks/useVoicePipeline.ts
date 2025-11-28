@@ -16,6 +16,7 @@ import {
   GuidedContextData,
 } from '../services/voiceService';
 import { processFieldResponse, validateFieldValue, generateErrorPrompt, generateTaskGreeting } from '../utils/conversationFlow';
+import { scanAddressDocument, scanPANCard, DocumentData } from '../services/documentScanService';
 
 export const useVoicePipeline = () => {
   const {
@@ -372,6 +373,100 @@ export const useVoicePipeline = () => {
         await speakResponse(parsed.message);
         await new Promise(resolve => setTimeout(resolve, 200));
         await startRecording();
+        break;
+      }
+
+      case 'scan_document': {
+        try {
+          // Speak the AI's message suggesting scanning
+          await speakResponse(parsed.message);
+
+          console.log('[VoicePipeline] Starting document scan for type:', parsed.documentType);
+
+          // Scan the appropriate document type
+          let extractedData: DocumentData;
+          if (parsed.documentType === 'address') {
+            extractedData = await scanAddressDocument(true);
+          } else if (parsed.documentType === 'pan') {
+            extractedData = await scanPANCard(true);
+          } else {
+            throw new Error('Unknown document type');
+          }
+
+          console.log('[VoicePipeline] Document scanned successfully:', extractedData);
+
+          // Extract the value based on field type
+          let fieldValue: string = '';
+          if (currentField.name === 'address' && extractedData) {
+            // Combine address parts into single string
+            const addressParts = [
+              extractedData.addressLine1,
+              extractedData.addressLine2,
+              extractedData.city,
+              extractedData.state,
+              extractedData.pincode,
+            ].filter(Boolean);
+            fieldValue = addressParts.join(', ');
+          } else if (currentField.name === 'panNumber' && extractedData.panNumber) {
+            fieldValue = extractedData.panNumber;
+          }
+
+          if (!fieldValue) {
+            throw new Error('No data extracted from document');
+          }
+
+          // Validate the extracted value
+          const validation = validateFieldValue(fieldValue, currentField, formState);
+          if (!validation.valid && validation.error) {
+            await speakResponse(`The scanned data is invalid: ${validation.error}. Let me ask you again. ${currentField.prompt}`);
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await startRecording();
+            return;
+          }
+
+          // Fill the form field with scanned data
+          const fieldRef = formRefs[currentField.refName];
+          const fieldHandler = formHandlers[`set${currentField.name.charAt(0).toUpperCase()}${currentField.name.slice(1)}`];
+
+          if (fieldRef && fieldHandler) {
+            const fieldOnBlur = formHandlers[`handle${currentField.name.charAt(0).toUpperCase()}${currentField.name.slice(1)}Blur`];
+            fillField(fieldRef, fieldValue, fieldHandler, fieldOnBlur);
+          }
+
+          // Update guided form state
+          guidedForm.updateFieldValue(currentField.name, '(scanned from document)', fieldValue);
+
+          // Speak confirmation
+          await speakResponse(`Great! I've captured your ${currentField.label.toLowerCase()} from the document.`);
+
+          // Move to next field
+          if (!guidedForm.isLastField()) {
+            const nextField = guidedForm.moveToNextField();
+            if (nextField) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              await speakResponse(nextField.prompt);
+              await new Promise(resolve => setTimeout(resolve, 200));
+              await startRecording();
+            }
+          } else {
+            // All fields completed - automatically submit
+            console.log('[VoicePipeline] All fields completed, auto-submitting');
+            await autoSubmitForm();
+          }
+        } catch (error: any) {
+          console.error('[VoicePipeline] Document scan error:', error.message);
+
+          // Handle error gracefully - fall back to voice input
+          if (error.message.includes('No image captured')) {
+            // User cancelled - ask them to provide verbally instead
+            await speakResponse("No problem. Let's continue with voice instead. " + currentField.prompt);
+          } else {
+            await speakResponse("I had trouble scanning the document. Let's try entering it with voice instead. " + currentField.prompt);
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await startRecording();
+        }
         break;
       }
     }

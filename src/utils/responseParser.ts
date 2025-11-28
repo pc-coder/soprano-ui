@@ -1,13 +1,14 @@
 /**
  * Types for parsed responses from LLM in guided mode
  */
-export type GuidedResponseAction = 'fill_field' | 'skip' | 'go_back' | 'cancel' | 'clarify';
+export type GuidedResponseAction = 'fill_field' | 'skip' | 'go_back' | 'cancel' | 'clarify' | 'scan_document';
 
 export interface ParsedGuidedResponse {
   action: GuidedResponseAction;
   field?: string;
   value?: any;
   message: string;
+  documentType?: 'address' | 'pan';
 }
 
 /**
@@ -38,7 +39,7 @@ export const parseGuidedResponse = (responseText: string): ParsedGuidedResponse 
     }
 
     // Validate action type
-    const validActions: GuidedResponseAction[] = ['fill_field', 'skip', 'go_back', 'cancel', 'clarify'];
+    const validActions: GuidedResponseAction[] = ['fill_field', 'skip', 'go_back', 'cancel', 'clarify', 'scan_document'];
     if (!validActions.includes(parsed.action)) {
       throw new Error(`Invalid action: ${parsed.action}`);
     }
@@ -48,6 +49,7 @@ export const parseGuidedResponse = (responseText: string): ParsedGuidedResponse 
       field: parsed.field,
       value: parsed.value,
       message: parsed.message,
+      documentType: parsed.documentType,
     };
   } catch (error: any) {
     console.error('[ResponseParser] Error parsing guided response:', error.message);

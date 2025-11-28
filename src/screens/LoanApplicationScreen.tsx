@@ -16,8 +16,6 @@ import { InputField } from '../components/InputField';
 import { Button } from '../components/Button';
 import { Soprano } from '../components/Soprano';
 import { GuidedModeIndicator } from '../components/GuidedModeIndicator';
-import { ScanDocumentButton } from '../components/ScanDocumentButton';
-import { DocumentData } from '../services/documentScanService';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -128,33 +126,6 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     return true;
   };
 
-  const handleAddressDataExtracted = (data: DocumentData) => {
-    // Combine all address fields into a single string
-    const fullAddress = [
-      data.addressLine1,
-      data.addressLine2,
-      data.city,
-      data.state,
-      data.pincode,
-    ]
-      .filter(Boolean)
-      .join(', ');
-
-    if (fullAddress) {
-      setAddress(fullAddress);
-      // Clear address error
-      setErrors((prev) => ({ ...prev, address: undefined }));
-    }
-  };
-
-  const handlePANDataExtracted = (data: DocumentData) => {
-    // Auto-fill PAN number from scanned document
-    if (data.panNumber) setPanNumber(data.panNumber);
-
-    // Clear PAN error
-    setErrors((prev) => ({ ...prev, panNumber: undefined }));
-  };
-
   const handleSubmit = () => {
     const isLoanAmountValid = validateLoanAmount();
     const isAddressValid = validateAddress();
@@ -218,11 +189,6 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Address</Text>
-          <ScanDocumentButton
-            documentType="address"
-            onDataExtracted={handleAddressDataExtracted}
-          />
-          <View style={{ height: spacing.md }} />
           <InputField
             label="Complete Address"
             value={address}
@@ -243,11 +209,6 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>PAN Details</Text>
-          <ScanDocumentButton
-            documentType="pan"
-            onDataExtracted={handlePANDataExtracted}
-          />
-          <View style={{ height: spacing.md }} />
           <InputField
             label="PAN Number"
             value={panNumber}

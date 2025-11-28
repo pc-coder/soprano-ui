@@ -263,6 +263,9 @@ ${contextDescription}`;
 GUIDED MODE INSTRUCTIONS:
 You are helping the user fill out a form field-by-field using voice.
 
+DOCUMENT SCANNING CAPABILITY:
+For address and PAN number fields, you can suggest using the camera to scan physical documents (Aadhaar card, utility bill, PAN card) instead of typing. Suggest this if the user mentions having a document or if extracting from a document would be significantly easier.
+
 IMPORTANT: The user has ALREADY been asked: "${guidedContext.currentField.prompt}"
 The user has just spoken their response. Your job is to extract the value from what they said.
 
@@ -286,6 +289,7 @@ SPECIAL CASES:
 - If user says "go back" or "change previous": {"action": "go_back", "message": "Going back to the previous field"}
 - If user says "cancel" or "stop": {"action": "cancel", "message": "Canceling form filling"}
 - If response is unclear: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
+- If field is "address" or "panNumber" and user mentions document/card/scan OR it would be easier: {"action": "scan_document", "documentType": "address" or "pan", "message": "I can scan your address document using the camera. Would you like me to do that?"}
 
 VALUE EXTRACTION RULES:
 - For UPI IDs: Convert "arvind at paytm" → "arvind@paytm", "john at oksbi" → "john@oksbi", "priya at phonepe" → "priya@phonepe"
