@@ -17,8 +17,10 @@ export const API_CONFIG = {
   elevenlabs: {
     apiKey: Constants.expoConfig?.extra?.ELEVENLABS_API_KEY || process.env.EXPO_PUBLIC_ELEVENLABS_API_KEY || '',
     voiceId: Constants.expoConfig?.extra?.ELEVENLABS_VOICE_ID || process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID || '',
+    voiceIdEnglish: Constants.expoConfig?.extra?.ELEVENLABS_VOICE_ID_ENGLISH || process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID_ENGLISH || '',
+    voiceIdHindi: Constants.expoConfig?.extra?.ELEVENLABS_VOICE_ID_HINDI || process.env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID_HINDI || '',
     baseUrl: 'https://api.elevenlabs.io/v1',
-    model: 'eleven_monolingual_v1',
+    model: 'eleven_multilingual_v2',
   },
 };
 
@@ -29,7 +31,9 @@ if (__DEV__) {
   if (!API_CONFIG.openai.apiKey) missingKeys.push('OPENAI_API_KEY');
   if (!API_CONFIG.anthropic.apiKey) missingKeys.push('ANTHROPIC_API_KEY');
   if (!API_CONFIG.elevenlabs.apiKey) missingKeys.push('ELEVENLABS_API_KEY');
-  if (!API_CONFIG.elevenlabs.voiceId) missingKeys.push('ELEVENLABS_VOICE_ID');
+  if (!API_CONFIG.elevenlabs.voiceId && !API_CONFIG.elevenlabs.voiceIdEnglish) {
+    missingKeys.push('ELEVENLABS_VOICE_ID or ELEVENLABS_VOICE_ID_ENGLISH');
+  }
 
   if (missingKeys.length > 0) {
     console.warn(

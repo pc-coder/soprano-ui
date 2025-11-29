@@ -35,6 +35,7 @@ export const useVoicePipeline = () => {
   const { fillField } = useFormController();
   const recordingRef = useRef<Audio.Recording | null>(null);
   const prevGuidedModeRef = useRef(guidedForm.isGuidedMode);
+  const detectedLanguageRef = useRef<string>('english'); // Store detected language from STT
 
   /**
    * Cancel recording and audio when guided mode stops
@@ -162,8 +163,11 @@ export const useVoicePipeline = () => {
       // Step 1: Transcribe audio with OpenAI Whisper
       let transcript: string;
       try {
-        transcript = await transcribeAudio(audioUri);
+        const transcriptionResult = await transcribeAudio(audioUri);
+        transcript = transcriptionResult.text;
+        detectedLanguageRef.current = transcriptionResult.language;
         setTranscript(transcript);
+        console.log('[VoicePipeline] Detected language:', transcriptionResult.language);
       } catch (transcriptionError: any) {
         console.error('[VoicePipeline] Transcription failed:', transcriptionError.message);
 
@@ -716,10 +720,10 @@ export const useVoicePipeline = () => {
   }, [guidedForm, speakResponse, startRecording]);
 
   /**
-   * Synthesize and play response
+   * Synthesize and play response with language-specific voice
    */
   const speakResponse = useCallback(async (text: string) => {
-    const audioResponseUri = await synthesizeSpeech(text);
+    const audioResponseUri = await synthesizeSpeech(text, detectedLanguageRef.current);
     setStatus('speaking');
     await playAudio(audioResponseUri);
     // Reset status to idle after speaking completes

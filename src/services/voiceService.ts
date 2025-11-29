@@ -14,10 +14,15 @@ export interface GuidedContextData {
   progress: { current: number; total: number };
 }
 
+export interface TranscriptionResult {
+  text: string;
+  language: string; // Language name from Whisper (e.g., "english", "hindi")
+}
+
 /**
- * Transcribe audio using OpenAI Whisper STT
+ * Transcribe audio using OpenAI Whisper STT with language detection
  */
-export const transcribeAudio = async (audioUri: string): Promise<string> => {
+export const transcribeAudio = async (audioUri: string): Promise<TranscriptionResult> => {
   const startTime = performance.now();
 
   try {
@@ -36,6 +41,7 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
       name: 'audio.m4a',
     } as any);
     formData.append('model', API_CONFIG.openai.whisperModel);
+    formData.append('response_format', 'verbose_json');
     // Remove language parameter for automatic language detection
     // formData.append('language', 'en');
 
@@ -58,15 +64,16 @@ export const transcribeAudio = async (audioUri: string): Promise<string> => {
 
     const data = await response.json();
     const transcript = data.text;
+    const language = data.language || 'english'; // Default to english if not detected
 
     if (!transcript) {
       throw new Error('No transcript returned from OpenAI');
     }
 
     const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-    console.log(`[VoiceService] STT completed in ${duration}s: "${transcript}"`);
+    console.log(`[VoiceService] STT completed in ${duration}s: "${transcript}" (Language: ${language})`);
 
-    return transcript;
+    return { text: transcript, language };
   } catch (error: any) {
     console.error('[VoiceService] STT error:', error.message);
     throw new Error(`Failed to transcribe audio: ${error.message}`);
@@ -122,18 +129,45 @@ export const getLLMResponse = async (
 };
 
 /**
- * Synthesize speech using ElevenLabs TTS
+ * Synthesize speech using ElevenLabs TTS with language-specific voices
  */
-export const synthesizeSpeech = async (text: string): Promise<string> => {
+export const synthesizeSpeech = async (text: string, detectedLanguage?: string): Promise<string> => {
   const startTime = performance.now();
 
   try {
+    // Import language mapping utilities
+    const { getVoiceIdForLanguage, getLanguageCodeForElevenLabs } = await import('../utils/languageMapping');
+
+    // Get the appropriate voice ID based on detected language
+    const voiceId = detectedLanguage
+      ? getVoiceIdForLanguage(detectedLanguage)
+      : (API_CONFIG.elevenlabs.voiceIdEnglish || API_CONFIG.elevenlabs.voiceId);
+
+    const languageCode = detectedLanguage ? getLanguageCodeForElevenLabs(detectedLanguage) : 'en';
+
     console.log('[VoiceService] Synthesizing text:', text.substring(0, 50) + '...');
-    console.log('[VoiceService] API Key present:', !!API_CONFIG.elevenlabs.apiKey);
-    console.log('[VoiceService] Voice ID:', API_CONFIG.elevenlabs.voiceId);
+    console.log('[VoiceService] Detected language:', detectedLanguage || 'default');
+    console.log('[VoiceService] Using voice ID:', voiceId);
+    console.log('[VoiceService] Language code:', languageCode);
+
+    const requestBody: any = {
+      text,
+      model_id: API_CONFIG.elevenlabs.model,
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: 0.75,
+        style: 0.0,
+        use_speaker_boost: true,
+      },
+    };
+
+    // Add language_code for multilingual v2 model if we have a detected language
+    if (detectedLanguage) {
+      requestBody.language_code = languageCode;
+    }
 
     const response = await fetch(
-      `${API_CONFIG.elevenlabs.baseUrl}/text-to-speech/${API_CONFIG.elevenlabs.voiceId}`,
+      `${API_CONFIG.elevenlabs.baseUrl}/text-to-speech/${voiceId}`,
       {
         method: 'POST',
         headers: {
@@ -141,16 +175,7 @@ export const synthesizeSpeech = async (text: string): Promise<string> => {
           'xi-api-key': API_CONFIG.elevenlabs.apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text,
-          model_id: API_CONFIG.elevenlabs.model,
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.0,
-            use_speaker_boost: true,
-          },
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 
