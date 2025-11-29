@@ -165,9 +165,15 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     const isPanValid = validatePanNumber();
 
     if (isLoanAmountValid && isEmiTenureValid && isAddressValid && isPanValid) {
-      // Navigate to confirmation screen or show success message
-      // For now, just navigate back to dashboard
-      navigation.goBack();
+      // Generate application ID
+      const applicationId = `LA${Date.now().toString().slice(-8)}`;
+
+      // Navigate to success screen
+      navigation.navigate('LoanSuccess', {
+        loanAmount: parseFloat(loanAmount),
+        emiTenure: parseInt(emiTenure),
+        applicationId,
+      });
     }
   };
 
