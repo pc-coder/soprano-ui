@@ -6,7 +6,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { useVoice } from '../context/VoiceContext';
@@ -22,12 +22,32 @@ export const Soprano: React.FC = () => {
   const { currentScreen, formRefs } = useScreenContext();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
+  const lottieRef = useRef<LottieView>(null);
 
   // Debug logging
   useEffect(() => {
     console.log('[Soprano] Status changed to:', status);
     console.log('[Soprano] Guided mode:', guidedForm.isGuidedMode);
   }, [status, guidedForm.isGuidedMode]);
+
+  // Control Lottie animation based on status
+  useEffect(() => {
+    if (lottieRef.current) {
+      switch (status) {
+        case 'listening':
+          lottieRef.current.play();
+          break;
+        case 'processing':
+          lottieRef.current.play();
+          break;
+        case 'speaking':
+          lottieRef.current.play();
+          break;
+        default:
+          lottieRef.current.play(); // Always animate for personality
+      }
+    }
+  }, [status]);
 
   // Pulsing animation for listening state
   useEffect(() => {
@@ -130,18 +150,16 @@ export const Soprano: React.FC = () => {
     }
   };
 
-  const getIcon = () => {
+  const getAnimationSpeed = () => {
     switch (status) {
       case 'listening':
-        return 'mic';
+        return 1.5; // Faster for active listening
       case 'processing':
-        return 'hourglass';
+        return 1.2; // Medium speed for processing
       case 'speaking':
-        return 'volume-high';
-      case 'error':
-        return 'alert-circle';
+        return 1.0; // Normal speed for speaking
       default:
-        return 'mic';
+        return 0.8; // Slower idle animation
     }
   };
 
@@ -174,13 +192,14 @@ export const Soprano: React.FC = () => {
         disabled={false}
         activeOpacity={0.8}
       >
-        {status === 'processing' ? (
-          <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Ionicons name={getIcon()} size={28} color="#fff" />
-          </Animated.View>
-        ) : (
-          <Ionicons name={getIcon()} size={28} color="#fff" />
-        )}
+        <LottieView
+          ref={lottieRef}
+          source={require('../../assets/animations/robot.json')}
+          autoPlay
+          loop
+          speed={getAnimationSpeed()}
+          style={styles.lottieAnimation}
+        />
       </TouchableOpacity>
 
       {/* Recording indicator */}
@@ -218,6 +237,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  lottieAnimation: {
+    width: 70,
+    height: 70,
   },
   recordingIndicator: {
     position: 'absolute',
