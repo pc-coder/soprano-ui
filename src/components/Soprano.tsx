@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   TouchableOpacity,
   StyleSheet,
   Animated,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
+import { PanGestureHandler, TapGestureHandler, State } from 'react-native-gesture-handler';
 import LottieView from 'lottie-react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
@@ -15,6 +17,8 @@ import { useGuidedForm } from '../context/GuidedFormContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { getFormFieldsForScreen, hasGuidedFormSupport } from '../config/formFieldDefinitions';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 export const Soprano: React.FC = () => {
   const { status } = useVoice();
   const { handleMicPress, startGuidedConversation } = useVoicePipeline();
@@ -23,6 +27,20 @@ export const Soprano: React.FC = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const lottieRef = useRef<LottieView>(null);
+  const panRef = useRef<any>(null);
+  const tapRef = useRef<any>(null);
+  const longPressRef = useRef<any>(null);
+
+  // Draggable position state - start at bottom center
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const lastOffset = useRef({ x: SCREEN_WIDTH / 2 - 33, y: SCREEN_HEIGHT - 166 });
+
+  // Initialize position at bottom center
+  useEffect(() => {
+    translateX.setOffset(lastOffset.current.x);
+    translateY.setOffset(lastOffset.current.y);
+  }, []);
 
   // Debug logging
   useEffect(() => {
@@ -175,32 +193,96 @@ export const Soprano: React.FC = () => {
     outputRange: ['0deg', '360deg'],
   });
 
-  return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          transform: [{ scale: status === 'listening' ? pulseAnim : 1 }],
+  const onGestureEvent = Animated.event(
+    [
+      {
+        nativeEvent: {
+          translationX: translateX,
+          translationY: translateY,
         },
-      ]}
+      },
+    ],
+    { useNativeDriver: true }
+  );
+
+  const onHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.BEGAN) {
+      // Haptic feedback when drag starts
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } else if (event.nativeEvent.state === State.END) {
+      const { translationX: tx, translationY: ty } = event.nativeEvent;
+
+      // Update last offset
+      lastOffset.current = {
+        x: lastOffset.current.x + tx,
+        y: lastOffset.current.y + ty,
+      };
+
+      // Reset translation and set new offset
+      translateX.setOffset(lastOffset.current.x);
+      translateX.setValue(0);
+      translateY.setOffset(lastOffset.current.y);
+      translateY.setValue(0);
+    }
+  };
+
+  const onTapHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      handlePress();
+    }
+  };
+
+  const onLongPressHandlerStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.ACTIVE) {
+      handleLongPress();
+    }
+  };
+
+  return (
+    <PanGestureHandler
+      ref={panRef}
+      onGestureEvent={onGestureEvent}
+      onHandlerStateChange={onHandlerStateChange}
+      simultaneousHandlers={[tapRef, longPressRef]}
+      minDist={10}
     >
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: getButtonColor() }]}
-        onPress={handlePress}
-        onLongPress={handleLongPress}
-        delayLongPress={400}
-        disabled={false}
-        activeOpacity={0.8}
+      <Animated.View
+        style={[
+          styles.container,
+          {
+            transform: [
+              { translateX },
+              { translateY },
+              { scale: status === 'listening' ? pulseAnim : 1 },
+            ],
+          },
+        ]}
       >
-        <LottieView
-          ref={lottieRef}
-          source={require('../../assets/animations/robot.json')}
-          autoPlay
-          loop
-          speed={getAnimationSpeed()}
-          style={styles.lottieAnimation}
-        />
-      </TouchableOpacity>
+        <TapGestureHandler
+          ref={longPressRef}
+          onHandlerStateChange={onLongPressHandlerStateChange}
+          minDurationMs={400}
+          simultaneousHandlers={panRef}
+        >
+          <TapGestureHandler
+            ref={tapRef}
+            onHandlerStateChange={onTapHandlerStateChange}
+            simultaneousHandlers={[panRef, longPressRef]}
+          >
+            <Animated.View
+              style={[styles.button, { backgroundColor: getButtonColor() }]}
+            >
+              <LottieView
+                ref={lottieRef}
+                source={require('../../assets/animations/robot.json')}
+                autoPlay
+                loop
+                speed={getAnimationSpeed()}
+                style={styles.lottieAnimation}
+              />
+            </Animated.View>
+          </TapGestureHandler>
+        </TapGestureHandler>
 
       {/* Recording indicator */}
       {status === 'listening' && (
@@ -215,21 +297,23 @@ export const Soprano: React.FC = () => {
           <ActivityIndicator size="small" color={colors.warning} />
         </View>
       )}
-    </Animated.View>
+      </Animated.View>
+    </PanGestureHandler>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
-    right: 20,
-    alignItems: 'center',
+    top: 0,
+    left: 0,
+    width: 66,
+    height: 66,
   },
   button: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -240,8 +324,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lottieAnimation: {
-    width: 70,
-    height: 70,
+    width: 77,
+    height: 77,
   },
   recordingIndicator: {
     position: 'absolute',
