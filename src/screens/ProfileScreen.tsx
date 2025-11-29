@@ -30,7 +30,18 @@ interface Props {
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user } = useApp();
   const { logout } = useAuth();
-  const { showCaptions, setShowCaptions } = useSettings();
+  const {
+    showCaptions,
+    setShowCaptions,
+    sttProvider,
+    setSttProvider,
+    llmProvider,
+    setLlmProvider,
+    ttsProvider,
+    setTtsProvider,
+    ocrProvider,
+    setOcrProvider,
+  } = useSettings();
   const { setCurrentScreen } = useScreenContext();
   const account = user.accounts[0];
 
@@ -115,6 +126,204 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
             </Card>
           </View>
         ))}
+
+        {/* AI Service Providers */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI Service Providers</Text>
+          <Card>
+            {/* STT Provider */}
+            <View style={[styles.settingRow, styles.infoRowBorder]}>
+              <View style={styles.providerSetting}>
+                <View style={styles.infoLeft}>
+                  <MaterialCommunityIcons
+                    name="microphone-outline"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.infoLabel}>Speech to Text</Text>
+                </View>
+                <View style={styles.providerOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      sttProvider === 'openai' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setSttProvider('openai')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        sttProvider === 'openai' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      OpenAI
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      sttProvider === 'expo-speech' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setSttProvider('expo-speech')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        sttProvider === 'expo-speech' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      Expo (Offline)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* LLM Provider */}
+            <View style={[styles.settingRow, styles.infoRowBorder]}>
+              <View style={styles.providerSetting}>
+                <View style={styles.infoLeft}>
+                  <MaterialCommunityIcons
+                    name="brain"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.infoLabel}>Language Model</Text>
+                </View>
+                <View style={styles.providerOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      llmProvider === 'claude' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setLlmProvider('claude')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        llmProvider === 'claude' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      Claude
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      llmProvider === 'qwen' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setLlmProvider('qwen')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        llmProvider === 'qwen' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      Qwen (Offline)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* TTS Provider */}
+            <View style={[styles.settingRow, styles.infoRowBorder]}>
+              <View style={styles.providerSetting}>
+                <View style={styles.infoLeft}>
+                  <MaterialCommunityIcons
+                    name="volume-high"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.infoLabel}>Text to Speech</Text>
+                </View>
+                <View style={styles.providerOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      ttsProvider === 'elevenlabs' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setTtsProvider('elevenlabs')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        ttsProvider === 'elevenlabs' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      ElevenLabs
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      ttsProvider === 'expo-speech' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setTtsProvider('expo-speech')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        ttsProvider === 'expo-speech' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      Expo (Offline)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* OCR Provider */}
+            <View style={styles.settingRow}>
+              <View style={styles.providerSetting}>
+                <View style={styles.infoLeft}>
+                  <MaterialCommunityIcons
+                    name="ocr"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                  <Text style={styles.infoLabel}>OCR (Text Recognition)</Text>
+                </View>
+                <View style={styles.providerOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      ocrProvider === 'claude' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setOcrProvider('claude')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        ocrProvider === 'claude' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      Claude
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.providerButton,
+                      ocrProvider === 'smolvlm' && styles.providerButtonActive,
+                    ]}
+                    onPress={() => setOcrProvider('smolvlm')}
+                  >
+                    <Text
+                      style={[
+                        styles.providerButtonText,
+                        ocrProvider === 'smolvlm' && styles.providerButtonTextActive,
+                      ]}
+                    >
+                      SmolVLM (Offline)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Card>
+        </View>
 
         {/* Settings Options */}
         <View style={styles.section}>
@@ -270,6 +479,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: spacing.md,
+  },
+  providerSetting: {
+    flex: 1,
+  },
+  providerOptions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  providerButton: {
+    flex: 1,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+  },
+  providerButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight + '20',
+  },
+  providerButtonText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  providerButtonTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
 
