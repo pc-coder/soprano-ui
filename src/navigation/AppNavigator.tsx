@@ -9,6 +9,7 @@ import TransactionsScreen from '../screens/TransactionsScreen';
 import UPIPaymentScreen from '../screens/UPIPaymentScreen';
 import UPIConfirmScreen from '../screens/UPIConfirmScreen';
 import UPISuccessScreen from '../screens/UPISuccessScreen';
+import UPIFailureScreen from '../screens/UPIFailureScreen';
 import LoanApplicationScreen from '../screens/LoanApplicationScreen';
 import LoanSuccessScreen from '../screens/LoanSuccessScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -26,6 +27,13 @@ export type RootStackParamList = {
     isNewRecipient: boolean;
   };
   UPISuccess: {
+    amount: number;
+    recipientName: string;
+    upiId: string;
+    transactionId: string;
+    timestamp: string;
+  };
+  UPIFailure: {
     amount: number;
     recipientName: string;
     upiId: string;
@@ -92,6 +100,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="UPISuccess"
           component={UPISuccessScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="UPIFailure"
+          component={UPIFailureScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

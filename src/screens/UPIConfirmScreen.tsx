@@ -50,13 +50,24 @@ const UPIConfirmScreen: React.FC<Props> = ({ navigation, route }) => {
       const transactionId = generateTransactionId();
       const timestamp = new Date().toISOString();
 
-      navigation.replace('UPISuccess', {
-        amount,
-        recipientName,
-        upiId,
-        transactionId,
-        timestamp,
-      });
+      // Check if payment should fail for user@newbank
+      if (upiId.toLowerCase() === 'user@newbank') {
+        navigation.replace('UPIFailure', {
+          amount,
+          recipientName,
+          upiId,
+          transactionId,
+          timestamp,
+        });
+      } else {
+        navigation.replace('UPISuccess', {
+          amount,
+          recipientName,
+          upiId,
+          transactionId,
+          timestamp,
+        });
+      }
     }, 2000);
   };
 
