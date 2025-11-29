@@ -35,16 +35,19 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   // Refs for all input fields
   const loanAmountRef = useRef<TextInput>(null);
+  const emiTenureRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
   const panNumberRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Form state
   const [loanAmount, setLoanAmount] = useState('');
+  const [emiTenure, setEmiTenure] = useState('');
   const [address, setAddress] = useState('');
   const [panNumber, setPanNumber] = useState('');
   const [errors, setErrors] = useState<{
     loanAmount?: string;
+    emiTenure?: string;
     address?: string;
     panNumber?: string;
   }>({});
@@ -58,17 +61,19 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     // Update form state for Soprano context
     updateFormState({
       loanAmount,
+      emiTenure,
       address,
       panNumber,
       errors,
       focusedField,
     });
-  }, [loanAmount, address, panNumber, errors, focusedField]);
+  }, [loanAmount, emiTenure, address, panNumber, errors, focusedField]);
 
   useEffect(() => {
     // Register form refs for guided mode
     registerFormRefs({
       loanAmountRef,
+      emiTenureRef,
       addressRef,
       panNumberRef,
     });
@@ -79,6 +84,7 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
     // Register form handlers for guided mode
     registerFormHandlers({
       setLoanAmount,
+      setEmiTenure,
       setAddress,
       setPanNumber,
       handleSubmit,
@@ -100,6 +106,28 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
       return false;
     }
     setErrors((prev) => ({ ...prev, loanAmount: undefined }));
+    return true;
+  };
+
+  const validateEmiTenure = () => {
+    const tenure = parseInt(emiTenure);
+    if (!emiTenure.trim()) {
+      setErrors((prev) => ({ ...prev, emiTenure: 'EMI tenure is required' }));
+      return false;
+    }
+    if (isNaN(tenure) || tenure <= 0) {
+      setErrors((prev) => ({ ...prev, emiTenure: 'Please enter a valid tenure' }));
+      return false;
+    }
+    if (tenure < 6) {
+      setErrors((prev) => ({ ...prev, emiTenure: 'Minimum tenure is 6 months' }));
+      return false;
+    }
+    if (tenure > 360) {
+      setErrors((prev) => ({ ...prev, emiTenure: 'Maximum tenure is 360 months (30 years)' }));
+      return false;
+    }
+    setErrors((prev) => ({ ...prev, emiTenure: undefined }));
     return true;
   };
 
@@ -132,10 +160,11 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSubmit = () => {
     const isLoanAmountValid = validateLoanAmount();
+    const isEmiTenureValid = validateEmiTenure();
     const isAddressValid = validateAddress();
     const isPanValid = validatePanNumber();
 
-    if (isLoanAmountValid && isAddressValid && isPanValid) {
+    if (isLoanAmountValid && isEmiTenureValid && isAddressValid && isPanValid) {
       // Navigate to confirmation screen or show success message
       // For now, just navigate back to dashboard
       navigation.goBack();
@@ -144,9 +173,11 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
 
   const isFormValid =
     loanAmount.trim() !== '' &&
+    emiTenure.trim() !== '' &&
     address.trim() !== '' &&
     panNumber.trim() !== '' &&
     !errors.loanAmount &&
+    !errors.emiTenure &&
     !errors.address &&
     !errors.panNumber;
 
@@ -189,6 +220,21 @@ const LoanApplicationScreen: React.FC<Props> = ({ navigation }) => {
             }}
             inputRef={loanAmountRef}
             isGuidedActive={isFieldGuidedActive('loanAmount')}
+          />
+          <InputField
+            label="EMI Tenure (Months)"
+            value={emiTenure}
+            onChangeText={setEmiTenure}
+            placeholder="Enter tenure in months"
+            keyboardType="numeric"
+            error={errors.emiTenure}
+            onFocus={() => setFocusedField('emiTenure')}
+            onBlur={() => {
+              validateEmiTenure();
+              setFocusedField(null);
+            }}
+            inputRef={emiTenureRef}
+            isGuidedActive={isFieldGuidedActive('emiTenure')}
           />
         </View>
 

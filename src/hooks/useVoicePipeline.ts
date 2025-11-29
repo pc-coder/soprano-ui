@@ -394,6 +394,16 @@ export const useVoicePipeline = () => {
         break;
       }
 
+      case 'provide_clarification': {
+        // User asked a question - provide clarification and then ask for value
+        console.log('[VoicePipeline] Providing field clarification:', parsed.message);
+        await speakResponse(parsed.message);
+        // After answering the question, start recording for the actual field value
+        await new Promise(resolve => setTimeout(resolve, 700));
+        await startRecording();
+        break;
+      }
+
       case 'scan_document': {
         try {
           // Speak the AI's message suggesting scanning

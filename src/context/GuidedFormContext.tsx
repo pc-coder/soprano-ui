@@ -9,6 +9,12 @@ export interface FormFieldDefinition {
   required: boolean;
   refName: string;
   type?: 'text' | 'number' | 'email';
+  // Metadata for clarifications and help
+  description?: string;
+  helpText?: string;
+  tips?: string[];
+  examples?: string[];
+  clarifications?: Record<string, string>; // Common questions mapped to answers
 }
 
 export interface ConversationEntry {

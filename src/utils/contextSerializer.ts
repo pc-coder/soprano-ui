@@ -214,12 +214,41 @@ function serializeGuidedModeContext(guided: GuidedModeContext): string {
     return '';
   }
 
+  const field = guided.currentField;
+
   let desc = '\n🎯 GUIDED FORM MODE ACTIVE\n\n';
-  desc += `Current Task: Fill the "${guided.currentField.label}" field\n`;
+  desc += `Current Task: Fill the "${field.label}" field\n`;
   desc += `Progress: Step ${guided.progress.current} of ${guided.progress.total}\n`;
-  desc += `Field Prompt: ${guided.currentField.prompt}\n`;
-  desc += `Field Type: ${guided.currentField.type || 'text'}\n`;
-  desc += `Required: ${guided.currentField.required ? 'Yes' : 'No (can be skipped)'}\n`;
+  desc += `Field Prompt: ${field.prompt}\n`;
+  desc += `Field Type: ${field.type || 'text'}\n`;
+  desc += `Required: ${field.required ? 'Yes' : 'No (can be skipped)'}\n`;
+
+  // Add field metadata for clarifications
+  if (field.description) {
+    desc += `\nField Description: ${field.description}\n`;
+  }
+
+  if (field.helpText) {
+    desc += `Help Text: ${field.helpText}\n`;
+  }
+
+  if (field.tips && field.tips.length > 0) {
+    desc += `\nHelpful Tips:\n`;
+    field.tips.forEach((tip, index) => {
+      desc += `  ${index + 1}. ${tip}\n`;
+    });
+  }
+
+  if (field.examples && field.examples.length > 0) {
+    desc += `\nExamples: ${field.examples.slice(0, 3).join(', ')}\n`;
+  }
+
+  if (field.clarifications) {
+    desc += `\nCommon Questions & Answers:\n`;
+    for (const [question, answer] of Object.entries(field.clarifications)) {
+      desc += `  Q: "${question}"\n  A: ${answer}\n\n`;
+    }
+  }
 
   if (guided.completedFields.length > 0) {
     desc += `\nCompleted Fields: ${guided.completedFields.join(', ')}\n`;
@@ -267,28 +296,38 @@ DOCUMENT SCANNING CAPABILITY:
 For address and PAN number fields, you can suggest using the camera to scan physical documents (Aadhaar card, utility bill, PAN card) instead of typing. Suggest this if the user mentions having a document or if extracting from a document would be significantly easier.
 
 IMPORTANT: The user has ALREADY been asked: "${guidedContext.currentField.prompt}"
-The user has just spoken their response. Your job is to extract the value from what they said.
+The user has just spoken their response. Your job is to EITHER extract the value they provided OR answer their clarification question.
 
-YOUR TASK:
-1. The user was asked for the "${guidedContext.currentField.label}" field
-2. The user's spoken response is in the transcript below
-3. Extract the value they said for this SPECIFIC field ONLY
-4. Respond with a confirmation message
+DETECTING USER INTENT:
+1. If the user is ASKING A QUESTION (contains words like "what", "why", "how", "explain", "difference", "should I", "can you", "which", "tell me", or ends with "?"):
+   - Respond with {"action": "provide_clarification", "message": "<SHORT, CRISP answer in 1-2 sentences MAX>"}
+   - Use the Field Description, Help Text, Tips, Examples, and Common Questions & Answers to inform your response
+   - Keep it BRIEF and to the point - maximum 2 sentences
+   - After answering, prompt them to provide the value: "Now, what would you like to enter for ${guidedContext.currentField.label}?"
 
-RESPONSE FORMAT:
-You must respond with valid JSON in the following format:
+2. If the user is PROVIDING A VALUE (a direct answer to the field prompt):
+   - Extract the value and confirm with {"action": "fill_field", "field": "${guidedContext.currentField.name}", "value": "<extracted_value>", "message": "<confirmation>"}
+
+RESPONSE FORMATS:
+For providing a value:
 {
   "action": "fill_field",
   "field": "${guidedContext.currentField.name}",
   "value": "<extracted_value>",
-  "message": "<friendly confirmation message to speak to user>"
+  "message": "<friendly confirmation message>"
+}
+
+For answering questions (KEEP IT SHORT - 1-2 sentences max):
+{
+  "action": "provide_clarification",
+  "message": "<SHORT crisp answer in 1-2 sentences>. Now, what would you like to enter for ${guidedContext.currentField.label}?"
 }
 
 SPECIAL CASES:
 - If user says "skip" or "no" for optional fields: {"action": "skip", "message": "Okay, skipping this field"}
 - If user says "go back" or "change previous": {"action": "go_back", "message": "Going back to the previous field"}
 - If user says "cancel" or "stop": {"action": "cancel", "message": "Canceling form filling"}
-- If response is unclear: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
+- If response is unclear and NOT a question: {"action": "clarify", "message": "I didn't catch that. Could you please repeat?"}
 - If field is "address" or "panNumber" and user says "scan" OR mentions document/card/Aadhaar/having it on card: {"action": "scan_document", "documentType": "address" or "pan", "message": "Sure! Let me open the camera to scan your document."}
 
 VALUE EXTRACTION RULES:
@@ -298,10 +337,11 @@ VALUE EXTRACTION RULES:
 - For text: Extract as-is
 
 CRITICAL RULES:
-1. DO NOT ask any questions - only extract and confirm
-2. DO NOT mention other fields - only the current field: "${guidedContext.currentField.label}"
-3. The message should be a confirmation like "Got it, I've set the ${guidedContext.currentField.label} to [value]"
-4. Only return the JSON, no additional text before or after`;
+1. Use the field metadata (Description, Help Text, Tips, Examples, Clarifications) to answer user questions accurately
+2. Always end clarification responses by asking for the field value
+3. DO NOT mention other fields - only the current field: "${guidedContext.currentField.label}"
+4. For value confirmations, use messages like "Got it, I've set the ${guidedContext.currentField.label} to [value]"
+5. Only return the JSON, no additional text before or after`;
   } else {
     // Free conversation mode instructions
     basePrompt += `
