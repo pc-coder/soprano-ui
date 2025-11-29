@@ -43,15 +43,16 @@ const UPIFailureScreen: React.FC<Props> = ({ navigation, route }) => {
       failed: true,
     });
 
-    // Proactively reassure the user about the failed transaction
+    // Proactively reassure the user about the failed transaction in Hindi
     const speakReassurance = async () => {
       if (hasSpokenRef.current) return;
       hasSpokenRef.current = true;
 
-      const message = `I'm sorry, the payment to ${recipientName} could not be processed at this time. Please don't worry - your money is completely safe. If any amount was deducted from your account, it will be automatically refunded within 24 hours.`;
+      const message = `Mujhe maaf kijiye, ${recipientName} ko payment abhi process nahi ho payi. Aap chinta mat kijiye - aapka paisa bilkul safe hai. Agar koi amount aapke account se kata hai toh woh 24 ghante mein automatically refund ho jayega.`;
 
       try {
-        const audioUri = await synthesizeSpeech(message);
+        // Always use Hindi voice for guided interactions
+        const audioUri = await synthesizeSpeech(message, 'hindi');
         setCurrentSpeechText(message);
         setStatus('speaking');
         await playAudio(audioUri);

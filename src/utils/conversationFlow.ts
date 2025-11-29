@@ -74,23 +74,23 @@ export const validateFieldValue = (
 };
 
 /**
- * Generate task-specific greeting based on screen/form type
+ * Generate task-specific greeting based on screen/form type in Hindi
  */
 export const generateTaskGreeting = (screenName: string, totalFields: number): string => {
   let taskDescription = '';
 
   switch (screenName) {
     case 'UPIPayment':
-      taskDescription = 'make a UPI payment';
+      taskDescription = 'UPI payment karne mein';
       break;
     case 'LoanApplication':
-      taskDescription = 'apply for a loan';
+      taskDescription = 'loan ke liye apply karne mein';
       break;
     default:
-      taskDescription = 'complete this task';
+      taskDescription = 'yeh kaam karne mein';
   }
 
-  return `I'll help you ${taskDescription}. We have ${totalFields} fields to complete. Let's start.`;
+  return `Main aapki ${taskDescription} madad karunga. Humare paas ${totalFields} fields hain jo bharne hain. Chaliye shuru karte hain.`;
 };
 
 /**
@@ -104,10 +104,10 @@ export const generateFieldPrompt = (field: FormFieldDefinition, isFirstField: bo
 };
 
 /**
- * Generate error re-prompt when validation fails
+ * Generate error re-prompt when validation fails in Hindi
  */
 export const generateErrorPrompt = (field: FormFieldDefinition, error: string): string => {
-  return `I'm sorry, but ${error}. ${field.prompt}`;
+  return `Maaf kijiye, ${error}. ${field.prompt}`;
 };
 
 /**

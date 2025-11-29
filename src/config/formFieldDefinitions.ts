@@ -9,7 +9,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'upiId',
       label: 'UPI ID',
-      prompt: "What's the UPI ID you'd like to send money to using UPI? For example, name at paytm or name at phonepe.",
+      prompt: "Aap kis UPI ID par paise bhejana chahte hain? Jaise ke, naam at paytm ya naam at phonepe.",
       validation: (value: string) => validateUPIId(value),
       required: true,
       refName: 'upiIdRef',
@@ -31,7 +31,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'amount',
       label: 'Amount',
-      prompt: 'How many rupees would you like to send?',
+      prompt: 'Aap kitne rupaye bhejana chahte hain?',
       validation: (value: string, formData?: Record<string, any>) => {
         const amountNum = typeof value === 'string' ? parseFloat(value) : value;
         const balance = formData?.balance || 50000; // Default balance or get from context
@@ -57,7 +57,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'note',
       label: 'Note',
-      prompt: "Would you like to add a note for this UPI payment? You can say 'skip' if you don't want to add one.",
+      prompt: "Kya aap is payment ke liye koi note add karna chahenge? Agar nahi chahte toh 'skip' boliye.",
       validation: undefined,
       required: false,
       refName: 'noteRef',
@@ -80,7 +80,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'loanAmount',
       label: 'Loan Amount',
-      prompt: 'How many rupees would you like to apply for as a loan?',
+      prompt: 'Aap kitne rupaye ka loan lena chahte hain?',
       validation: (value: string) => {
         const amount = parseFloat(value);
         if (isNaN(amount) || amount <= 0) {
@@ -112,7 +112,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'emiTenure',
       label: 'EMI Tenure',
-      prompt: 'For how many months would you like to repay the loan? The minimum is 6 months and maximum is 360 months.',
+      prompt: 'Aap kitne mahine mein loan wapas karna chahte hain? Kam se kam 6 mahine aur jyada se jyada 360 mahine.',
       validation: (value: string) => {
         const tenure = parseInt(value);
         if (isNaN(tenure) || tenure <= 0) {
@@ -149,7 +149,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'address',
       label: 'Address',
-      prompt: 'What is your complete address in India? You can tell me verbally, or if you have a document like Aadhaar card, just say scan and I will use the camera.',
+      prompt: 'Aapka pura address kya hai? Aap mujhe bol sakte hain, ya agar aapke paas Aadhaar card jaisa koi document hai toh scan boliye aur main camera use karunga.',
       validation: (value: string) => {
         if (!value.trim()) {
           return { valid: false, error: 'Address is required' };
@@ -185,7 +185,7 @@ export const FORM_FIELD_DEFINITIONS: Record<string, FormFieldDefinition[]> = {
     {
       name: 'panNumber',
       label: 'PAN Number',
-      prompt: 'What is your Indian PAN card number? You can tell me the number, or say scan to capture it from your PAN card using the camera.',
+      prompt: 'Aapka PAN card number kya hai? Aap mujhe number bata sakte hain, ya scan boliye toh main camera se aapke PAN card se number le lunga.',
       validation: (value: string) => {
         if (!value.trim()) {
           return { valid: false, error: 'PAN number is required' };

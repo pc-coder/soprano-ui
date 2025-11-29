@@ -177,7 +177,7 @@ export const useVoicePipeline = () => {
           const currentField = guidedForm.getCurrentField();
           if (currentField) {
             console.log('[VoicePipeline] Guided mode - asking user to repeat');
-            await speakResponse("I didn't catch that. Could you please repeat?");
+            await speakResponse("Mujhe samajh nahi aaya. Kripya dubara boliye?");
             await new Promise(resolve => setTimeout(resolve, 700));
             await startRecording();
             return;
@@ -266,7 +266,7 @@ export const useVoicePipeline = () => {
         if (currentField) {
           console.log('[VoicePipeline] Guided mode - recovering from error');
           try {
-            await speakResponse("Sorry, I had trouble processing that. Let's try again. " + currentField.prompt);
+            await speakResponse("Maaf kijiye, mujhe process karne mein dikkat aayi. Chaliye dubara try karte hain. " + currentField.prompt);
             await new Promise(resolve => setTimeout(resolve, 700));
             await startRecording();
             return;
@@ -362,7 +362,7 @@ export const useVoicePipeline = () => {
             await startRecording();
           }
         } else {
-          await speakResponse("I'm sorry, but this field is required. " + currentField.prompt);
+          await speakResponse("Maaf kijiye, lekin yeh field zaroori hai. " + currentField.prompt);
           await new Promise(resolve => setTimeout(resolve, 700));
           await startRecording();
         }
@@ -451,7 +451,7 @@ export const useVoicePipeline = () => {
           // Validate the extracted value
           const validation = validateFieldValue(fieldValue, currentField, formState);
           if (!validation.valid && validation.error) {
-            await speakResponse(`The scanned data is invalid: ${validation.error}. Let me ask you again. ${currentField.prompt}`);
+            await speakResponse(`Scan kiya hua data sahi nahi hai: ${validation.error}. Chaliye dobara poochte hain. ${currentField.prompt}`);
             await new Promise(resolve => setTimeout(resolve, 200));
             await startRecording();
             return;
@@ -470,7 +470,7 @@ export const useVoicePipeline = () => {
           guidedForm.updateFieldValue(currentField.name, '(scanned from document)', fieldValue);
 
           // Speak confirmation
-          await speakResponse(`Great! I've captured your ${currentField.label.toLowerCase()} from the document.`);
+          await speakResponse(`Bahut achha! Maine aapka ${currentField.label.toLowerCase()} document se le liya hai.`);
 
           // Move to next field
           if (!guidedForm.isLastField()) {
@@ -492,9 +492,9 @@ export const useVoicePipeline = () => {
           // Handle error gracefully - fall back to voice input
           if (error.message.includes('No image captured')) {
             // User cancelled - ask them to provide verbally instead
-            await speakResponse("No problem. Let's continue with voice instead. " + currentField.prompt);
+            await speakResponse("Koi baat nahi. Chaliye voice se aage badhte hain. " + currentField.prompt);
           } else {
-            await speakResponse("I had trouble scanning the document. Let's try entering it with voice instead. " + currentField.prompt);
+            await speakResponse("Mujhe document scan karne mein dikkat aayi. Chaliye ise voice se enter karte hain. " + currentField.prompt);
           }
 
           await new Promise(resolve => setTimeout(resolve, 700));
@@ -606,7 +606,7 @@ export const useVoicePipeline = () => {
 
     if (isConfirmed) {
       console.log('[VoicePipeline] User confirmed - submitting form');
-      await speakResponse("Perfect! Processing your payment now.");
+      await speakResponse("Bilkul sahi! Aapka payment abhi process ho raha hai.");
 
       // Get the filled values from guided form
       const filledValues = guidedForm.getFilledValues();
@@ -653,21 +653,21 @@ export const useVoicePipeline = () => {
             upiError: upiValidation.error,
             amountError: amountValidation.error,
           });
-          await speakResponse("Sorry, there was an error validating the payment details. Please try again.");
+          await speakResponse("Maaf kijiye, payment details validate karne mein error aa gayi. Kripya dobara try kijiye.");
         }
       }
     } else if (isRejected) {
       console.log('[VoicePipeline] User rejected - offering to edit');
       guidedForm.setAwaitingConfirmation(false);
       guidedForm.setSelectingFieldToEdit(true);
-      await speakResponse("No problem. Which field would you like to change? You can say UPI ID, amount, or note.");
+      await speakResponse("Koi baat nahi. Aap kaun sa field change karna chahte hain? Aap UPI ID, amount, ya note bol sakte hain.");
 
       // Listen for which field to edit
       await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     } else {
       // Unclear response - ask again
-      await speakResponse("I didn't catch that. Would you like to proceed with this payment? Please say yes or no.");
+      await speakResponse("Mujhe samajh nahi aaya. Kya aap is payment ko aage badhana chahte hain? Kripya haan ya nahi boliye.");
       await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     }
@@ -693,7 +693,7 @@ export const useVoicePipeline = () => {
     } else if (lowerTranscript.includes('cancel') || lowerTranscript.includes('nevermind')) {
       // User wants to cancel editing
       guidedForm.setSelectingFieldToEdit(false);
-      await speakResponse("Okay, transaction cancelled.");
+      await speakResponse("Theek hai, transaction cancel ho gaya.");
       guidedForm.stopGuidedMode();
       return;
     }
@@ -704,17 +704,17 @@ export const useVoicePipeline = () => {
 
       if (field) {
         guidedForm.setSelectingFieldToEdit(false);
-        await speakResponse(`Okay, let's update the ${field.label}. ${field.prompt}`);
+        await speakResponse(`Theek hai, chaliye ${field.label} update karte hain. ${field.prompt}`);
         await new Promise(resolve => setTimeout(resolve, 700));
         await startRecording();
       } else {
-        await speakResponse("Sorry, I couldn't find that field. Please say UPI ID, amount, or note.");
+        await speakResponse("Maaf kijiye, mujhe woh field nahi mila. Kripya UPI ID, amount, ya note boliye.");
         await new Promise(resolve => setTimeout(resolve, 700));
         await startRecording();
       }
     } else {
       // Unclear response
-      await speakResponse("I didn't catch which field you want to edit. Please say UPI ID, amount, or note.");
+      await speakResponse("Mujhe samajh nahi aaya aap kaun sa field edit karna chahte hain. Kripya UPI ID, amount, ya note boliye.");
       await new Promise(resolve => setTimeout(resolve, 700));
       await startRecording();
     }
@@ -722,9 +722,13 @@ export const useVoicePipeline = () => {
 
   /**
    * Synthesize and play response with language-specific voice
+   * Always uses Hindi for guided mode
    */
   const speakResponse = useCallback(async (text: string) => {
-    const audioResponseUri = await synthesizeSpeech(text, detectedLanguageRef.current);
+    // Always use Hindi for guided mode, otherwise use detected language
+    const languageToUse = guidedForm.isGuidedMode ? 'hindi' : detectedLanguageRef.current;
+
+    const audioResponseUri = await synthesizeSpeech(text, languageToUse);
     setCurrentSpeechText(text);
     setStatus('speaking');
     await playAudio(audioResponseUri);
@@ -732,7 +736,7 @@ export const useVoicePipeline = () => {
     setStatus('idle');
     setCurrentSpeechText(null);
     console.log('[VoicePipeline] Speech completed, status reset to idle');
-  }, [setStatus, setCurrentSpeechText]);
+  }, [setStatus, setCurrentSpeechText, guidedForm.isGuidedMode]);
 
   /**
    * Cancel recording without processing
