@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { colors } from '../theme/colors';
 
+import PINLoginScreen from '../screens/PINLoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import TransactionsScreen from '../screens/TransactionsScreen';
 import UPIPaymentScreen from '../screens/UPIPaymentScreen';
@@ -13,6 +14,7 @@ import LoanSuccessScreen from '../screens/LoanSuccessScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 
 export type RootStackParamList = {
+  PINLogin: undefined;
   Dashboard: undefined;
   Transactions: undefined;
   UPIPayment: undefined;
@@ -45,7 +47,7 @@ const AppNavigator = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Dashboard"
+        initialRouteName="PINLogin"
         screenOptions={{
           headerStyle: {
             backgroundColor: colors.primary,
@@ -62,6 +64,11 @@ const AppNavigator = () => {
           },
         }}
       >
+        <Stack.Screen
+          name="PINLogin"
+          component={PINLoginScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="Dashboard"
           component={DashboardScreen}

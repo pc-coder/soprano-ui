@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StatusBar } from 'react-native';
+import { AuthProvider } from './src/context/AuthContext';
 import { AppProvider } from './src/context/AppContext';
 import { ScreenContextProvider } from './src/context/ScreenContext';
 import { VoiceProvider } from './src/context/VoiceContext';
@@ -11,18 +12,20 @@ import { VisualGuideOverlay } from './src/components/VisualGuideOverlay';
 
 export default function App() {
   return (
-    <AppProvider>
-      <ScreenContextProvider>
-        <VoiceProvider>
-          <GuidedFormProvider>
-            <VisualGuideProvider>
-              <StatusBar barStyle="light-content" />
-              <AppNavigator />
-              <VisualGuideOverlay />
-            </VisualGuideProvider>
-          </GuidedFormProvider>
-        </VoiceProvider>
-      </ScreenContextProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <ScreenContextProvider>
+          <VoiceProvider>
+            <GuidedFormProvider>
+              <VisualGuideProvider>
+                <StatusBar barStyle="light-content" />
+                <AppNavigator />
+                <VisualGuideOverlay />
+              </VisualGuideProvider>
+            </GuidedFormProvider>
+          </VoiceProvider>
+        </ScreenContextProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }

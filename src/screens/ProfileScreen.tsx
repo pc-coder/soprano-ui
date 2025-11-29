@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { CommonActions } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { Card } from '../components/Card';
 import { Soprano } from '../components/Soprano';
@@ -25,12 +27,23 @@ interface Props {
 
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user } = useApp();
+  const { logout } = useAuth();
   const { setCurrentScreen } = useScreenContext();
   const account = user.accounts[0];
 
   useEffect(() => {
     setCurrentScreen('Profile');
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'PINLogin' }],
+      })
+    );
+  };
 
   const profileSections = [
     {
@@ -126,7 +139,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.settingRow}>
+            <TouchableOpacity style={[styles.settingRow, styles.infoRowBorder]}>
               <View style={styles.infoLeft}>
                 <MaterialCommunityIcons
                   name="help-circle-outline"
@@ -136,6 +149,17 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.infoLabel}>Help & Support</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.settingRow} onPress={handleLogout}>
+              <View style={styles.infoLeft}>
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={20}
+                  color={colors.error}
+                />
+                <Text style={[styles.infoLabel, { color: colors.error }]}>Logout</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.error} />
             </TouchableOpacity>
           </Card>
         </View>
