@@ -5,12 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CommonActions } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { useScreenContext } from '../context/ScreenContext';
 import { Card } from '../components/Card';
 import { Soprano } from '../components/Soprano';
@@ -28,6 +30,7 @@ interface Props {
 const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user } = useApp();
   const { logout } = useAuth();
+  const { showCaptions, setShowCaptions } = useSettings();
   const { setCurrentScreen } = useScreenContext();
   const account = user.accounts[0];
 
@@ -128,6 +131,22 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
               </View>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
+            <View style={[styles.settingRow, styles.infoRowBorder]}>
+              <View style={styles.infoLeft}>
+                <MaterialCommunityIcons
+                  name="closed-caption-outline"
+                  size={20}
+                  color={colors.textSecondary}
+                />
+                <Text style={styles.infoLabel}>Voice Assistant Captions</Text>
+              </View>
+              <Switch
+                value={showCaptions}
+                onValueChange={setShowCaptions}
+                trackColor={{ false: colors.border, true: colors.primaryLight }}
+                thumbColor={showCaptions ? colors.primary : colors.textMuted}
+              />
+            </View>
             <TouchableOpacity style={[styles.settingRow, styles.infoRowBorder]}>
               <View style={styles.infoLeft}>
                 <MaterialCommunityIcons

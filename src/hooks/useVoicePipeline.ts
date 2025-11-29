@@ -26,6 +26,7 @@ export const useVoicePipeline = () => {
     setTranscript,
     setResponse,
     setError,
+    setCurrentSpeechText,
     reset,
   } = useVoice();
 
@@ -724,12 +725,14 @@ export const useVoicePipeline = () => {
    */
   const speakResponse = useCallback(async (text: string) => {
     const audioResponseUri = await synthesizeSpeech(text, detectedLanguageRef.current);
+    setCurrentSpeechText(text);
     setStatus('speaking');
     await playAudio(audioResponseUri);
     // Reset status to idle after speaking completes
     setStatus('idle');
+    setCurrentSpeechText(null);
     console.log('[VoicePipeline] Speech completed, status reset to idle');
-  }, [setStatus]);
+  }, [setStatus, setCurrentSpeechText]);
 
   /**
    * Cancel recording without processing

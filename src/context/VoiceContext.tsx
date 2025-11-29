@@ -8,6 +8,7 @@ interface VoiceState {
   transcript: string | null;
   response: string | null;
   error: string | null;
+  currentSpeechText: string | null;
 }
 
 interface VoiceContextType extends VoiceState {
@@ -16,6 +17,7 @@ interface VoiceContextType extends VoiceState {
   setTranscript: (transcript: string | null) => void;
   setResponse: (response: string | null) => void;
   setError: (error: string | null) => void;
+  setCurrentSpeechText: (text: string | null) => void;
   reset: () => void;
 }
 
@@ -39,6 +41,7 @@ const initialState: VoiceState = {
   transcript: null,
   response: null,
   error: null,
+  currentSpeechText: null,
 };
 
 export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
@@ -47,6 +50,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
   const [transcript, setTranscript] = useState<string | null>(initialState.transcript);
   const [response, setResponse] = useState<string | null>(initialState.response);
   const [error, setError] = useState<string | null>(initialState.error);
+  const [currentSpeechText, setCurrentSpeechText] = useState<string | null>(initialState.currentSpeechText);
 
   const setStatus = (newStatus: VoiceStatus) => {
     console.log('[VoiceContext] Status changing from', status, 'to', newStatus);
@@ -59,6 +63,7 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     setTranscript(initialState.transcript);
     setResponse(initialState.response);
     setError(initialState.error);
+    setCurrentSpeechText(initialState.currentSpeechText);
   };
 
   const value: VoiceContextType = {
@@ -67,11 +72,13 @@ export const VoiceProvider: React.FC<VoiceProviderProps> = ({ children }) => {
     transcript,
     response,
     error,
+    currentSpeechText,
     setStatus,
     setIsRecording,
     setTranscript,
     setResponse,
     setError,
+    setCurrentSpeechText,
     reset,
   };
 
